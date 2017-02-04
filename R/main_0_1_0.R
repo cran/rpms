@@ -89,14 +89,26 @@ var_select<-function(e_equ, data, e_fn=survLm_fit, weights=rep(1, nrow(data)),
   else
    data[,X[which(cat_vec)]] <- sapply(data[,X[which(cat_vec)]], as.integer)
 
-  pvec <- get_pvec(p_scores=pres, mX=mX,  vars=as.matrix(data[, X]), 
+  ptest <- get_pvec(p_scores=pres, mX=mX,  vars=as.matrix(data[, X]), 
                    cat_vec=cat_vec)
   #print(X)
   #print(pvec)  
  
-  ix <- which.min(pvec)
+#  ix <- which.min(ptest$pvec)
 
-  if(pvec[ix] <= pval)   return(X[ix]) else return(NULL)
+ # if(ptest$pvec[ix] <= pval)   return(X[ix]) else return(NULL)
+  
+  min_p <- min(ptest$pvec)
+  
+  if(min_p > pval) return(NULL) else {
+    ix <- which(ptest$pvec == min_p)
+    
+    nix <- length(ix)
+    if(nix== 1) return(X[ix]) else
+      return(X[ix[which.max(ptest$peak)]])
+    
+  }
+  
   
   #if(min(pvec)<Inf) return(X[which(pvec==min(pvec))]) else return(NULL)
 
@@ -358,7 +370,7 @@ covariates <- function(splits, data){
 # coef is a list containing the e_equ model coefficients for each node
 # coef_se a list containing the standard error coefficients for each node
 #
-
+#for internal use
 get_endnodes<- function(ln_sp, e_fn, e_equ, data, frame){
   two_vec <- 2^(0:(nrow(ln_sp)-1))
   end_vals <- covariates(splits=ln_sp, data)%*%two_vec
@@ -444,12 +456,8 @@ get_endnodes<- function(ln_sp, e_fn, e_equ, data, frame){
 #' @param pval numeric p-value used to reject null hypothesis in permutation 
 #'        test 
 #' 
-#' @details The dependent variable must be the same for rp_equ and e_equ, 
-#'  but recommended that the independent variables be different.  Categorical 
-#'  variables with many categories in the rp_equ will cause the algorithm to 
-#'  take a long time to run.
-#' 
 #' @return object of class "rpms"
+#' 
 #' 
 #' @examples
 #' {
@@ -464,8 +472,8 @@ get_endnodes<- function(ln_sp, e_fn, e_equ, data, frame){
 #' 
 #' rpms(FINDRETX~EDUC_REF+AGE_REF+BLS_URBN+REGION, data=CE,
 #'      e_equ=FINDRETX~FINCBTAX, clusters=~CID)     
-#' }
 #' 
+#' }
 #' @export
 #' @aliases rpms
 
@@ -476,6 +484,7 @@ rpms<-function(rp_equ, data, weights=~1, strata=~1, clusters=~1,
   varlist <- unique(c(all.vars(rp_equ), all.vars(e_equ), all.vars(weights), 
                         all.vars(strata), all.vars(clusters)))
   
+  des_ind <- c(FALSE, FALSE, FALSE)
   
   if(all(varlist %in% names(data)))
      data <- na.omit(data[,varlist]) #this can be removed once we handle missing
@@ -509,7 +518,8 @@ rpms<-function(rp_equ, data, weights=~1, strata=~1, clusters=~1,
     if(length(all.vars(weights))==0) {weights <- rep(1, nrow(data))} else
       if(all.vars(weights)[1] %in% names(data)){
         des$weights=weights
-        weigths <- as.numeric(data[,all.vars(weights)[1]])} else 
+        weights <- as.numeric(data[,all.vars(weights)[1]])
+        des_ind[1] <- if(var(weights)>0) TRUE } else 
           stop(paste("Problem with weights:",
                      all.vars(weights)[1], "not in data set"))
   
@@ -521,6 +531,7 @@ rpms<-function(rp_equ, data, weights=~1, strata=~1, clusters=~1,
     if(length(all.vars(strata))==0) {strata <- rep(1L, nrow(data))} else
       if(all.vars(strata)[1] %in% names(data)) {
         des$strata=strata
+        des_ind[2] <- TRUE
         strata <- as.integer(data[,all.vars(strata)[1]])} else 
           stop(paste("Problem with strata:",
                      all.vars(strata)[1], "not in data set"))
@@ -532,11 +543,11 @@ rpms<-function(rp_equ, data, weights=~1, strata=~1, clusters=~1,
   } else
     if(length(all.vars(clusters))==0) {clusters <- seq(1L:nrow(data))} else
       if(all.vars(clusters)[1] %in% names(data)) {
-        des$clusters<-clusters
+        des$clusters <- clusters
+        des_ind[3] <- TRUE
         clusters <- as.integer(data[,all.vars(clusters)[1]])} else
           stop(paste("Problem with clusters:",
                      all.vars(clusters)[1], "not in data set")) 
-  
   
   y <- data[,all.vars(e_equ)[1]]
   nas <- which(is.na(y))
@@ -558,7 +569,6 @@ rpms<-function(rp_equ, data, weights=~1, strata=~1, clusters=~1,
   
   mX<-model.matrix(e_equ, ndat)
   if(det(t(mX)%*%mX)==0) stop("Model matrix is singular")
-  
   
   #--- get root node -------#  
   fn<-survLm_model(y=as.matrix(y), X=mX, weights=weights, strata=strata, 
@@ -582,10 +592,14 @@ rpms<-function(rp_equ, data, weights=~1, strata=~1, clusters=~1,
   
   endnodes<-get_endnodes(lt, e_fn, e_equ, ndat, frame)
   
+  des_string <- if(sum(des_ind)==0) "Simple Random Sample"
+                else paste(c("unequal probability of selection", "stratified", "cluster")[which(des_ind)], "sample design")
   
-  t1<-list(rp_equ=rp_equ, e_equ=e_equ, frame=frame, ln_split=lt, 
-           end_nodes=endnodes, coef=endnodes$coef,
-           survey_design=des)
+  callvals <-list(rp_equ, e_equ, des_string, perm_reps, pval)
+    
+  t1 <- list(rp_equ=rp_equ, e_equ=e_equ, frame=frame, ln_split=lt, 
+             end_nodes=endnodes, coef=endnodes$coef, callvals=callvals)
+             #survey_design=des)
   
   #fit<-survLm_fit(predict.rpm(t1, data), covariates(lt, data), s.weights)
   fit<-survLm_model(y, covariates(lt, ndat), weights, strata, clusters)

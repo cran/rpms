@@ -35,4 +35,3 @@ vector of variable names with lowest estimated p-value
 \description{
 selects variables likely to result in the best split
 }
-

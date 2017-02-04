@@ -41,4 +41,3 @@ list containing split information
 \description{
 internal split function for RPMS
 }
-

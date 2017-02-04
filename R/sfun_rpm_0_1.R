@@ -2,69 +2,26 @@
 #
 # Version 0.1 
 #
-# Contains: node_plot, predict, print, plot, in_node,
+# Contains: end_nodes, in_node, node_plot, predict, print, (plot)
 # 
 # 
-#
 
-################################## plot.rpms ###################################################################
-# #' plot.rpms
-# #'
-# #' @param x \code{rpms} object
-# #' @param ...	further arguments passed to or from other methods.
-# #'
-# #' @description  plott method for class \code{rpms}
-# #'
-# #' @aliases plot
-# #' 
-# plot.rpms<-function(x, ...){
-#  
-#   params <- list(...)
-#   
-#   if("variable" %in% names(params)) variable <-params$variable
-#   else variable <- NULL
-#   
-#   if(is.null(variable)){
-#     if(length(all.vars(x$e_equ))>1)
-#       variable <- all.vars(x$e_equ)[2]
-#     else variable <- all.vars(x$rp_equ)[2]
-# 
-#   }
-#   else  if(!(variable %in% names(data) && is.character(variable)))
-#     stop(paste("variable", paste(variable, collapse=""),
-#                "is not a name in the data set"))
-#   
-#   if(is.numeric(variable)) coline <-TRUE else coline <-FALSE
-# 
-#   yvariable<-all.vars(x$e_equ)[1]
-# 
-#   #for each row get its associated end node
-#   ends<-rowSums(t(t(covariates(x$ln_split, data))*(2^(0:(nrow(x$ln_split)-1)))))
-#   uends<-sort(unique(ends))
-# 
-#   #  par(mfrow=c(length(uends), 1), mar=c(2, 2, 2, 2))
-# 
-#   for(i in 1:length(uends)){
-# 
-#     if(i%%4==1){
-#      # if(i>1) dev.next()
-#       par(mfrow=c(min(4, length(uends)-i+1), 1), mar=c(3, 3, 3, 3))
-#     }
-#     nind <- which(x$end_nodes$node_index["binary index",]==uends[i])
-#     plot(data[ends==uends[i],c(variable, yvariable)])
-#     title(main=paste0("Node ", x$end_nodes$node_index[2, nind]),
-#           ylab=yvariable, xlab=variable)
-# 
-#     if(coline)
-#       abline(coef=x$end_nodes$coef[[nind]][c(1,2)],
-#              col=2)
-# 
-#   }
-# 
-# 
-# } #end plot.rpms
-# 
-# ################################### End plot.rpms #################################################################
+###################################### end_nodes ################################################################
+#' end_nodes
+#' 
+#' @param t1 \code{rpms} object
+#' 
+#' @description  Get vector end-node labels
+#' 
+#' @return vector of lables of end-nodes.
+#' 
+#' @aliases rpms::end_nodes
+#' 
+#' @export
+end_nodes<-function(t1){
+ return(t1$end_nodes$node_index["node",]) 
+}
+# ################################### End end_nodes #################################################################
 
 
 ###################################### in_node ################################################################
@@ -87,9 +44,11 @@
 #' r1 <-rpms(FINDRETX~EDUC_REF+AGE_REF+BLS_URBN+REGION, data=CE,
 #'      e_equ=FINDRETX~FINCBTAX, clusters=~CID) 
 #' 
-#' summary(CE$FSALARYX[in_node(node=2, r1, data=CE)])
+#' if(2 %in% end_nodes(r1))
+#'   summary(CE$FSALARYX[in_node(node=2, r1, data=CE)])
 #'
-#' summary(CE$FSALARYX[in_node(node=6, r1, data=CE)])
+#' if(6 %in% end_nodes(r1))
+#'   summary(CE$FSALARYX[in_node(node=6, r1, data=CE)])
 #'
 #' @export 
 in_node<-function(node, t1, data){
@@ -112,7 +71,7 @@ in_node<-function(node, t1, data){
 
 ###################################### End in_node ############################
 
-################################## plot_node ##################################
+################################## node_plot ##################################
 #' node_plot
 #' 
 #' 
@@ -137,14 +96,15 @@ in_node<-function(node, t1, data){
 #' r1 <-rpms(FINDRETX~EDUC_REF+AGE_REF+BLS_URBN+REGION, data=CE,
 #'      e_equ=FINDRETX~FINCBTAX, clusters=~CID) 
 #' 
-#' # plot node 2
-#' node_plot(r1, node=2, data=CE)
+#' # plot node 2 if it is in tree
+#' if(2 %in% end_nodes(r1))
+#'   node_plot(r1, node=2, data=CE)
 #' 
-#' #' # plot node 7
-#' node_plot(r1, node=7, data=CE)
+#' #' # plot last end-node
 #' 
+#' if(6 %in% end_nodes(r1))
+#'   node_plot(r1, node=6, data=CE)
 #' 
-#' \dontrun{node_plot(r1, node=11, data=CE)}
 #' 
 #' }
 #'
@@ -222,13 +182,16 @@ predict.rpms<-function(object, newdata, ...){
 #  if("newdata" %in%)
   t1<-object
   
+  new_equ <- t1$e_equ[-2]
+  
   y<-numeric(nrow(newdata)) #vector for new y values
-  bin<-2^(0:(nrow(t1$ln_split)-1)) #vector 1, 2, 4, 8 ... 2^(p-1)
-  ends<-as.matrix(rowSums(t(t(covariates(splits=t1$ln_split, newdata))*bin)))
+  
+  bin <- 2^(0:(nrow(t1$ln_split)-1)) #vector 1, 2, 4, 8 ... 2^(p-1)
+  ends <- as.matrix(rowSums(t(t(covariates(splits=t1$ln_split, newdata))*bin)))
   
   get_y<-function(end){  
-    beta<-unlist(t1$coef[which(t1$end_nodes$node_index[1,]==end)])
-    X<-model.matrix(t1$e_equ, newdata[which(ends==end), ]) 
+    beta <- unlist(t1$coef[which(t1$end_nodes$node_index[1,]==end)])
+    X <- model.matrix(new_equ, newdata[which(ends==end), ]) 
     y[ends==end]<-X %*% beta
     
     return(y)
@@ -293,22 +256,39 @@ print.rpms<-function(x, ...){
 
 ################################### End print.rpm #################################################################
 
+################################## plot.rpms ###################################################################
+# #' plot.rpms
+# #'
+# #' @param x \code{rpms} object
+# #' @param ...	further arguments passed to or from other methods.
+# #'
+# #' @description  plott method for class \code{rpms}
+# #'
+# #' @aliases plot
+# #' 
+# plot.rpms<-function(x, ...){
+# 
+# 
+# } #end plot.rpms
+# 
+# ################################### End plot.rpms #################################################################
 
-########################### group_rpms ######################################################
 
-group_rpms<-function(tree, newdata){
-  bin<-2^(0:(nrow(tree$ln_split)-1))
-  grp<-as.numeric(rowSums(t(t(covariates(splits=tree$ln_split, newdata))*bin)))
-  glab<-rep(0, length(grp))
-  for(i in unique(grp))
-  
-    glab[which(grp==i)]<-which(sort(unique(grp))==i)
-  
-  return(glab)
-  
-}
-
-########################### End group.rpm ######################################################
+# ########################### group_rpms ######################################################
+# 
+# group_rpms<-function(tree, newdata){
+#   bin<-2^(0:(nrow(tree$ln_split)-1))
+#   grp<-as.numeric(rowSums(t(t(covariates(splits=tree$ln_split, newdata))*bin)))
+#   glab<-rep(0, length(grp))
+#   for(i in unique(grp))
+#   
+#     glab[which(grp==i)]<-which(sort(unique(grp))==i)
+#   
+#   return(glab)
+#   
+# }
+# 
+# ########################### End group.rpm ######################################################
 
 
 

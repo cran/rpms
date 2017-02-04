@@ -27,9 +27,10 @@ Get index of elements in dataframe that are in the specified
 r1 <-rpms(FINDRETX~EDUC_REF+AGE_REF+BLS_URBN+REGION, data=CE,
      e_equ=FINDRETX~FINCBTAX, clusters=~CID) 
 
-summary(CE$FSALARYX[in_node(node=2, r1, data=CE)])
+if(2 \%in\% end_nodes(r1))
+  summary(CE$FSALARYX[in_node(node=2, r1, data=CE)])
 
-summary(CE$FSALARYX[in_node(node=6, r1, data=CE)])
+if(6 \%in\% end_nodes(r1))
+  summary(CE$FSALARYX[in_node(node=6, r1, data=CE)])
 
 }
-

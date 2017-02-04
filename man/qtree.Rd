@@ -5,12 +5,16 @@
 \alias{rpms::qtree}
 \title{qtree}
 \usage{
-qtree(t1, title = "rpms", digits = 2)
+qtree(t1, title = "rpms", label = NA, caption = "", digits = 2)
 }
 \arguments{
 \item{t1}{rpms object created by rpms function}
 
-\item{title}{text for the top node of the tree}
+\item{title}{string for the top node of the tree}
+
+\item{label}{string used for labeling the tree figure}
+
+\item{caption}{string used for caption}
 
 \item{digits}{integer number of displayed digits}
 }
@@ -34,4 +38,3 @@ qtree(r1)
 
 }
 }
-

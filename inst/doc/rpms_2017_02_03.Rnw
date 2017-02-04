@@ -1,0 +1,674 @@
+\documentclass[nojss]{jss}
+%\documentclass[article]{jss}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% declarations for jss.cls %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{latexsym}
+\usepackage{epsfig}
+\usepackage{graphicx}
+\usepackage{lscape}
+\usepackage{qtree}
+\usepackage{float}
+
+\floatstyle{plain}
+\newfloat{tree}{h}{}
+\floatname{tree}{Tree}
+
+%\VignetteIndexEntry{An Introduction to rpms}
+%\usepackage[utf8]{inputenc}
+
+%- User definitions 
+
+\newtheorem{proposition}{Proposition}[section]
+\newtheorem{example}{Example}[subsection]
+
+%- Makes the section title start with Appendix in the appendix environment
+\newcommand{\Appendix}
+{%\appendix
+\def\thesection{Appendix~\Alph{section}}
+%\def\thesubsection{\Alph{section}.\arabic{subsection}}
+\def\thesubsection{A.\arabic{subsection}}
+}
+
+%% almost as usual
+\author{Daniell Toth\\U.S. Bureau of Labor Statistics}
+\title{\pkg{rpms}: An \proglang{R} Package for Modeling Survey Data with Regression Trees}
+
+%% for pretty printing and a nice hypersummary also set:
+\Plainauthor{Daniell Toth} %% comma-separated
+\Plaintitle{rpms: An R Package for Modeling Survey Data with Regression Trees} %% without formatting
+\Shorttitle{\pkg{rpms}: Recursive Partitioning for Modeling Survey Data} %% a short title (if necessary)
+
+%% an abstract and keywords
+\Abstract{
+In this article, we introduce the \proglang{R} package, \pkg{rpms} 
+(Recursive Partitioning for Modeling Survey Data). 
+The main function \code{rpms} fits a linear model to the data conditioning 
+on the splits selected through the recursive partitioning algorithm. 
+This application of recursive partitioning produces design consistent 
+regression tree models of survey data with one-stage designs, accounting for
+any stratification and clustering as well as unequal probability of selection. 
+
+We examine the properties of the algorithm using samples from a simulated 
+dataset and  we provide a number examples using household level data from
+the U.S. Bureau of Labor Statistics' Consumer Expenditure survey. 
+These applications demonstrate the easily interpretable structure and the 
+ability of regression trees to handle large datasets with complex 
+associations among the variables.
+}
+
+\Keywords{machine learning, nonparametric, recursive partitioning, 
+sample design} %with fomatting
+
+\Plainkeywords{machine learning, nonparametric, recursive partitioning, 
+sample design} %% without formatting
+%% at least one keyword must be supplied
+
+
+%% publication information
+%% NOTE: Typically, this can be left commented and will be filled out by the technical editor
+%% \Volume{50}
+%% \Issue{9}
+%% \Month{June}
+%% \Year{2012}
+%% \Submitdate{2012-06-04}
+%% \Acceptdate{2012-06-04}
+
+%% The address of (at least) one author should be given
+%% in the following format:
+\Address{
+  Daniell Toth\\
+  Office of Survey Methods Research\\
+  Senior Research Mathematical Statistician\\
+  U.S. Bureau of Labor Statistics\\
+  2 Massachusetts Avenue NE//
+  Washington, DC 20212\\
+  Telephone: +1/202/691-7380
+  E-mail: \email{toth.daniell@bls.gov}
+  %URL: \url{http://eeecon.uibk.ac.at/~zeileis/}
+}
+%% It is also possible to add a telephone and fax number
+%% before the e-mail in the following format:
+%% Telephone: +43/512/507-7103
+%% Fax: +43/512/507-2851
+
+%% for those who use Sweave please include the following line (with % symbols):
+%% need no \usepackage{Sweave.sty}
+
+%% end of declarations %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\begin{document}
+\SweaveOpts{concordance=FALSE}
+
+%% include your article here, just as usual
+%% Note that you should use the \pkg{}, \proglang{} and \code{} commands.
+
+%\section[About Java]{About \proglang{Java}}
+%% Note: If there is markup in \(sub)section, then it has to be escape as above.
+
+<<R_options, echo=FALSE, results=hide>>=
+options(prompt = "R> ", continue = "+  ", width = 70, useFancyQuotes = FALSE)
+@
+
+\section{Introduction}
+
+In this article we present the \proglang{R} \citep{R} package  
+\pkg{rpms} \citep{rpms}. 
+This package provides a function \code{rpms} that returns an object of class 
+``rpms", which is a representation of a regression tree model, 
+as well as a number of functions that operate on objects of this class. 
+A design-consistent regression tree is achieved by recursively 
+partitioning the dataset and fitting the specified linear model on each node 
+separately. 
+The variable on which to split is selected at each stage using a nonparameteric
+test on the residuals and the splitting is ended using a stopping-rule based
+on this test.  
+This leads to an algorithm that has unbiased variable selection and 
+design consistent model parameters. 
+The algorithm assumes a one-stage design that accounts 
+for stratification and clustering 
+as well as unequal probability of selection. 
+
+%In section \ref{algorithm} we 
+
+In Section \ref{demos} we will demonstrate the main function of the package, 
+\code{rpms}, which returns an object of class "rpms" and  the methods 
+defined for this class. Section \ref{ce} contains an application of the package
+to U.S. Consumer Expenditure (CE) survey data.
+
+<<load_pckg, echo=FALSE>>=
+library(rpms)
+
+@
+
+%\section{The Algorithm}\label{algorithm}
+
+%\cite{su04}  \citep{su04}
+%\cite{rpms} \citep{rpms} \cite{morgan63} \cite{hothorn06}
+
+%\subsection{Variable Selection}
+
+%\subsection{Estimating the Model Parameters}
+
+
+
+\section{Demonstrations}\label{demos}
+
+In this section we demonstrate the functions
+provided in the \pkg{rpms} package.
+In order to demonstrate the properties of the algorithm we simulate a population 
+\code{simd} of clustered data.
+
+\subsection{The Simulated Data}
+
+
+<<simulate_data, echo=FALSE, results=hide>>=
+set.seed(28)
+
+getpop <- function(N, m){
+csig <- 4
+esig <- 1
+xsig <- .3
+id <- nu <- eps <- vc <- x <- rep(0, N)
+for(i in 0:(floor(N/m)-1)){
+  nu_i <- rnorm(1, 0, csig)
+  vc_i <- rbinom(1, 6, .35)
+   x_i <- log(runif(1, 1, 10000), base=2)-2
+  for(j in 1:m){
+     id[i*m + j] <- i
+     nu[i*m + j] <- nu_i
+     vc[i*m + j] <- vc_i
+      x[i*m + j] <- x_i+rnorm(1, 0, xsig)
+    eps[i*m + j] <- rnorm(1, 0, esig)
+  }
+}
+va<-as.factor(rbinom(N, 3, .5))
+vb<-as.factor(rbinom(N, 3, .5))
+vc<-as.factor(vc)
+vd<-as.factor(ceiling(14*runif(N, 0, 1)))
+ve<-as.factor(rbinom(N, 1, .2))
+vf<-as.factor(rbinom(N, 1, .5))
+
+b <- ifelse(va ==1, .5, .06)+ ifelse(va ==1 & ve==1, .1, -.2) + 
+     ifelse(va %in% c(2,3) & ve ==0, -.3, .07)+
+     ifelse(va %in% c(2,3) & ve ==1, -.05, -.1)+
+     ifelse(va==0 & ve==1, .2, -.1)
+
+b1 <-  ifelse(va %in% c(2,3), -2, 3)
+y <- b1*(x-9) + nu + eps
+
+
+return(cbind.data.frame(id, y, x, va, vb, vc, vd, ve, vf, b1))
+}
+
+N <- 10000 #pop size
+n<- 400 #sample size
+m <- 20 #cluster size
+
+simd <- getpop(N, m)
+simd_p <- (ncol(simd)-1)
+
+gsamp<-sample(nrow(simd), 1000)
+@
+
+There are $\Sexpr{N}$ observations
+of the random variables,
+$(y, x, va, vb, vc, vd, ve, vf)$, where $x$ and $y$ are continuous random
+variables and the $v$-variables are categorical.
+Each observation $(y_i, x_i, va_i, vb_i, vc_i, vd_i, ve_i, vf_i)$, 
+is independent and identically distributed within a cluster,
+but the distributions of some of the random variables depend on the cluster.
+
+For example, the values of $vc$ are the same for every observation in a 
+given cluster, and the values of $x$ are correlated 
+within the cluster, but independent between clusters.
+The dataset contains the label \code{id}, which is unique for each cluster.  
+Figure~\ref{simplot1} shows a plot of the variables
+$y$ and $x,$ where observations from two randomly chosen clusters are colored
+to show the homogeneity of $y$ and $x$ within clusters.
+
+\begin{center}
+\begin{figure}[h]
+<<plot_sim_data, echo=FALSE, fig=TRUE, height=4, width=7>>=
+cluscols<-rep("grey", length(gsamp))
+cluspch<-rep(19, length(gsamp))
+cluscols[which(simd[gsamp, "id"]==59)] <- "dark blue"
+cluscols[which(simd[gsamp, "id"]==478)] <- "brown"
+cluspch[which(cluscols=="grey")] <- 1
+plot(y~x, simd[gsamp,], col=cluscols,  pch=cluspch)
+#points(y~x, simd[which(simd[gsamp, "id"]==305),], col="dark blue")
+#points(y~x, simd[which(simd[gsamp, "id"]==147),], col="brown")
+@
+
+\caption{Plot of simulated population values, with variable
+$y$ on the vertical-axis and $x$ on the horizontal-axis.
+Two randomly chosen clusters are colored (blue and brown).
+This plot shows the homogeneity of $y$ and $x$ within clusters 
+but does not seem to show a linear relationship between $x$ and $y.$}
+\label{simplot1}
+\end{figure}
+\end{center}
+
+Despite this scatter plot of the data not showing a 
+linear relationship between $x$ and $y$, the random
+variable $y$ was simulated from a linear model.
+The $i$-th observation of variable $y$ in cluster $j$ is determined by
+\begin{equation}
+y_{ij}=\beta_{ij}(x_{ij}-9) + \nu_{j} + \epsilon_{ij},
+\label{simmod}
+\end{equation}
+where $\nu_{j}$ and $\epsilon_{ij}$ are mean zero noise terms, 
+and $\beta_{ij}$ is a function of the random variable $va.$
+The coefficient $\beta_{ij}=3$ if the categorical variable $va_{ij} \in \{0, 1\}$ 
+and $\beta_{ij}=-2$ if $va_{ij} \in \{2, 3\}.$
+
+
+
+
+%<<summary_data, echo=FALSE,results=tex>>=
+%xtable(simd_sum)
+%by(simd[gsamp,], simd[gsamp,]$id, nrow)
+%@
+
+Figure~\ref{simplot2} is the same plot with the points that have
+$va_{ij} \in \{0, 1\}$ colored blue and the points with $va_{ij} \in \{2,3 \}$ 
+colored gold. Then the linear relationship is obvious.
+
+<<get_va_colors, echo=FALSE, results=hide>>=
+cl <- match(simd$b1, unique(simd$b1))
+
+
+blin<-lm(y~x, simd[gsamp[which(cl[gsamp]==1)], ])
+olin<-lm(y~x, simd[gsamp[which(cl[gsamp]==2)], ])
+
+@
+
+\begin{center}
+\begin{figure}
+<<va_plot, echo=FALSE, fig=TRUE, height=4, width=7>>=
+plot(y~x, simd[gsamp,], col=c("blue", "orange")[cl[gsamp]])
+abline(blin, col="dark blue")
+abline(olin, col="dark orange")
+@
+\caption{Plot of simulated population values, with variable
+$y$ on the vertical-axis and $x$ on the horizontal-axis.  
+In this plot with the points with
+$va_{ij} \in \{0, 1\}$ colored blue and the points with $va \in \{2,3 \}$ 
+colored gold, the linear relationship between $x$ and $y$ becomes obvious.}
+\label{simplot2}
+\end{figure}
+\end{center}
+
+We will use this simulated dataset \code{simd} to demonstrate 
+the \code{rpms} function and several functions provided in the 
+package that operate on ``rpms" objects.
+Since \code{rpms} is intended to allow inference about a population 
+using a regression tree estimated from survey data, 
+we will treat the dataset as the population and sample from it
+with different sampling designs to provide samples for use in the examples.
+
+\subsection[The rpms Function]{The \code{rpms} Function}
+
+The \code{rpms} function has two required arguments: 
+\code{rp_equ} and \code{data}.
+The recursive partitioning is an \proglang{R} formula which identifies 
+the dependent variable on the left-side of the ``\code{~}" and
+specifies which variables the algorithm should consider for splitting 
+the dataset on the right-side. 
+Each variable is separated by ``\code{+}" symbol and every variable 
+listed in the \code{rp_equ} should be the name of either a numeric or 
+categorical variable in the data.frame specified by the \code{data} argument. 
+
+The function \code{rpms} has an optional argument \code{e_equ} which 
+is also an \proglang{R} formula.
+This argument is used to specify the linear equation the algorithm should
+fit to the dependent variable of each node of the tree.
+The dependent variable in \code{rp_equ} and \code{e_equ} must be the same.
+If $y$ is the dependent variable and the \code{e_equ} is not given, 
+by default, the function fits the linear equation $y=\beta$ to the data in 
+each end-node. 
+In this case, the parameter $\beta$ is the mean of $y$ given the observation 
+is contained within that end-node. 
+
+
+\subsubsection{Simple Random Sample}
+
+The following code fits a regression tree model for $E[y]$ using data from a simple 
+random sample of size $n=\Sexpr{n}$ from the population and assigns it 
+to an object called \code{iid_tree}.
+<<iid_tree>>=
+
+s0<-sample(N, n)
+
+iid_tree <- rpms(rp_equ = y~va+vb+vc+ve+vf, data = simd[s0,])
+
+@
+
+<<tree_stats, echo=FALSE, results=hide>>=
+ybar01 <- round(iid_tree$coef[[1]], 2)
+ybar23 <- round(iid_tree$coef[[2]], 2)
+
+mu01 <- round(mean(simd[which(simd$va %in% c(0,1)), "y"]), 2)
+mu23 <- round(mean(simd[which(simd$va %in% c(2,3)), "y"]), 2)
+
+lnc1 <- round(iid_tree$ln_coef[1], 2)
+lnc2 <-round(iid_tree$ln_coef[2], 2)
+
+nnames <- length(names(iid_tree))
+@
+
+
+The result of the \code{rpms} call above is a binary tree 
+with one split on the variable $va$ shown in Figure~\ref{iidtree}.
+The algorithm chose to split only on the variable $va$ the only
+variable included in the recursive partitioning equation to which the dependent
+variable $y$ is related (Equation~\ref{simmod}).
+According to the tree, using this one sample of size $n=\Sexpr{n},$ 
+observations with a value of $va \in \{0, 1\},$
+the mean value of $y$ is $\Sexpr{ybar01}$ and $\Sexpr{ybar23}$
+for observations with $va \in \{2, 3\}.$  
+The population means of $y$ for the two domains are
+$\Sexpr{mu01}$ and $\Sexpr{mu23}$ respectively.
+
+
+<<qtree_plot, echo=FALSE,results=tex>>=
+qtree(iid_tree, title="iid tree", label="iidtree",
+      caption="This is the tree fit from the simple random sample.")
+@
+
+\subsubsection{The rpms object}
+
+The object \code{iid_tree} is an R object of class ``rpms",
+which is a list with $\Sexpr{nnames}$ elements and ``print" and ``predict" methods 
+defined for it.
+The internal elements of the object contain the necessary information 
+to describe the tree model and allow the methods and other functions to 
+operate on the object.
+Though the information is contained there, it was intended to be accessed 
+through the more user friendly methods and functions.
+
+\subsubsection{The Print Method}
+
+The class ``rpms" has a print method.
+The output of this method depends on whether the \code{e_equ} fits the mean
+or a linear equation with at least one independent variable.
+In the case of \code{iid_tree}, the estimating equation defaulted to fitting
+the mean at each end node, and so the output of print method is
+\begin{footnotesize}
+<<print_iid_tree>>=
+iid_tree
+@
+\end{footnotesize}
+
+The first item displayed is the variables considered for partitioning and
+the second is the model fit at the end of each node.
+In this case there was no model given in the call to \code{rpms} so
+the model, $y = \beta,$ is fit at the end
+of each node, so $\beta$ is the mean of the dependent variable $y$ in each node.
+
+The last item displayed by the method is a linear representation of the 
+fitted regression tree model.
+The first column shows the split and the next two give the coefficient and
+its design based standard error. 
+The coefficient can be interpreted as the effect satisfying
+that split has on the mean.
+For example by examining \code{iid_tree} for observation $i$ begin with a 
+estimate for $E[y_i]$ of $\Sexpr{lnc1}.$  
+If the the observation satisfies the split condition, that is, if 
+$va_i \in \{2, 3\},$ then add $\Sexpr{lnc2}$ to the estimate of $E[y_i].$
+If the tree had more than one split, you would continue adding the coefficient
+of every split satisfied by the observation to the estimate of $E[y_i].$
+
+If we estimated a tree fitting the linear model 
+$y=\beta_1x+\beta_0+\epsilon$ on each node, 
+then the print method displays only the coefficients of the model and not the
+standard errors.
+For example, using the data from the same simple random sample,
+\begin{footnotesize}
+<<iid_reg>>=
+iid_reg <- rpms(rp_equ = y~va+vb+vc+ve+vf, e_equ = y~x, data = simd[s0,])
+
+iid_reg
+@
+\end{footnotesize}
+
+\subsubsection{The Predict Method}
+
+<<get_new_data, echo=FALSE, results=hide>>=
+pre1 <- sample(10000, 8)
+new <- as.data.frame.array(simd[pre1, -c(1, 2, 10)], row.names=1:8)
+new[,"x"] <- round(new[,"x"], 2)
+@
+
+
+Once we have an rpms object we can use it to predict new values 
+given values of the covariates used for the recursive partitioning and 
+in the estimating equation.
+For example, suppose we have a dataframe 
+\begin{footnotesize}
+<<new_data>>=
+new
+@
+\end{footnotesize}
+We can impute the 8 missing values for the random variable $y$ as predicted 
+by the regression tree model.
+\begin{footnotesize}
+<<predict>>=
+predict(iid_reg, newdata=new)
+
+simd$y[pre1]
+
+@
+\end{footnotesize}
+
+\subsubsection{Cluster Sample}
+
+Now instead of a simple random sample of our data we will
+consider a cluster sample.
+We take all the observations in a simple random sample of 20 clusters
+and use this data to illustrate the importance of accounting for clusters
+in the sample design.
+\begin{footnotesize}
+<<cluster_sample>>=
+cs0 <- which(simd$id %in% sample(unique(simd$id), 20))
+@
+\end{footnotesize}
+Calling \code{rpms} below without identifying cluster labels and assigning it to
+\code{ctree1}, we get a tree model that splits not only on the variable $va,$ 
+but also on the variable $vc.$ 
+\begin{footnotesize}
+<<cluster_tree1>>=
+ctree1 <- rpms(rp_equ = y~va+vb+vc+ve+vf, data = simd[cs0,])
+
+ctree1
+@
+\end{footnotesize}
+
+The algorithm chose to split on $vc$ though, we know from 
+Equation~(\ref{simmod}), that values of $y$ do not depend on the values $vc.$
+This happens because the $y$ values are correlated within a clusters and the value
+of $vc$ are constant within a cluster.
+Since we only observe data from 20 clusters, it is likely that the algorithm
+finds partitions where $y$ values are homogeneous using values of 
+$vc$ to split.  
+Because the algorithm assumes that the values come from a sample of 400 
+independently selected observations the algorithm finds these splits to be
+significant.
+Accounting for the cluster sample design by specifying the cluster 
+identification variable $id$ in the call to \code{rpms}, results in a different 
+tree model.
+
+\begin{footnotesize}
+<<cluster_tree2>>=
+ctree2 <- rpms(rp_equ = y~va+vb+vc+ve+vf, data = simd[cs0,], clusters = ~id)
+
+ctree2
+@
+\end{footnotesize}
+
+After identifying the clusters, the algorithm no longer finds splits on the
+variable $vc$ significant and so the resulting model is very similar to the
+model that used simple random sample data and that captures the model used
+to generated the simulated data.
+The like \code{iid_tree}, \code{ctree2} only has the one split on $va,$ however
+the parameter estimates of each end node are closer to the population
+values for \code{iid_tree} than they are in \code{ctree2}. 
+The model \code{ctree2} is estimated using data that contains much
+less information than 200 independent observations so the parameter estimates
+are more variable.
+This is reflected in the estimated standard deviations of the parameter 
+estimates, which are three times as large for \code{ctree2} than 
+the parameter estimates of \code{iid_tree}.
+
+
+\subsection{Functions for Visualizing Trees}
+
+Besides the print function, the \code{rpms} package contains two functions which
+help the user visualize the regression-tree model fit using the \code{rpms} 
+function. The first, a function called \code{qtree}, we already saw an example 
+of in Figure~\ref{iidtree}.
+In order to make that figure in \proglang{LaTex} we use a the \code{qtree}
+function and put the command
+\begin{verbatim}
+\usepackage{qtree}
+\end{verbatim}
+in the preamble of our document.
+
+The exact call to \code{qtree} in order to make the \proglang{LaTeX} code
+necessary to draw Figure~\ref{iidtree} was:
+\begin{footnotesize}
+<<qtree_ex_hid, results=hide>>=
+qtree(iid_tree, title="iid tree", label="iidtree",
+      caption="This is the tree fit from the simple random sample.")
+@
+\end{footnotesize}
+which produces the following output:
+\begin{tiny}
+<<qtree_ex_res, echo=FALSE>>=
+qtree(iid_tree, title="iid tree", label="iidtree",
+      caption="This is the tree fit from the simple random sample.")
+@
+\end{tiny}
+This is code that can be directly put into a \proglang{LaTeX} document 
+when the package "qtree" is being used.
+
+The second function is \code{node_plot} which produces a graph of the data and
+the linear model fit to the data in the specified end\_node of the tree.
+For example, the tree \code{iid_reg} had end\_nodes 2 and 3, so we can
+look at the linear model fit at node 2 with the command:
+<<nodeplot1, fig=TRUE, height=4, width=7>>=
+node_plot(iid_reg, node = 2, data = simd[s0,])
+@
+
+
+
+\subsection{CE Examples}\label{ce}
+
+<<CE_data, echo=FALSE, results=hide>>=
+ce_n <- nrow(CE)
+ce_p <- ncol(CE)
+
+workers <- which(CE$FSALARYX>0)
+workers_n <-length(workers)
+
+clus_n <- length(unique(CE$CID[workers]))
+
+@
+In this section, we demonstrate some of the functions in the package 
+with examples using household and expenditure data from the 
+Consumer Expenditure Interview dataset for the first quarter of 2014.  
+The dataset \code{CE} has $\Sexpr{ce_n}$ observations 
+of $\Sexpr{ce_p}$ variables collected from $\Sexpr{clus_n}$ clusters.
+This dataset is included (and automatically loaded) with
+the \texttt{rpms} package. 
+
+We will use the \code{rpms} function to explore the relationship
+between a number of household variables and the propensity of households, 
+with income from earned wages, to contribute to a retirement plan.  
+The percent of working households that contribute to a retirement account 
+is estimated conditioning on a number of characteristics of the household.
+
+We estimate the regression tree model both ignoring the cluster sample and then 
+accounting for sample design using the design information contained in the dataset.
+Most of the splits obtained in the tree model when we ignore the clustering
+are removed once the clusters are accounted for.
+This illustrates that the clustering of many of the household variables 
+reduces the information obtained from the survey. This leads to less 
+certainty concerning differences in propensity between households with different
+characteristics observed in the data.
+\begin{footnotesize}
+<<ce_tree>>=
+
+CE$saver <- ifelse(CE$FINDRETX>0, 1, 0)
+
+rate_tree0 <- 
+  rpms(rp_equ = saver~FAM_SIZE+FINCBTAX+NO_EARNR+PERSOT64+CUTENURE+VEHQ+REGION, 
+                weights = ~FINLWT21, data = CE[workers,], pval=.01) 
+
+rate_tree1 <- 
+  rpms(rp_equ = saver~FAM_SIZE+FINCBTAX+NO_EARNR+PERSOT64+CUTENURE+VEHQ+REGION, 
+                weights = ~FINLWT21, clusters = ~CID, data = CE[workers,], pval=.01) 
+
+@
+\end{footnotesize}
+
+In each call to the function \code{rpms} an object is assigned the tree model 
+with the estimated percentage  of working households that contribute a 
+retirement account at each end-node.
+In the first model, \code{rate_tree0} is the resulting tree 
+which accounts for the unequal probability of selection by identifying the 
+sample weights \code{FINLWT21} but ignores the clustered sample-design.
+
+\begin{footnotesize}
+<<ce_tree_result>>=
+
+rate_tree0     
+
+rate_tree1
+@
+\end{footnotesize}
+
+In the second model, \code{rate_tree1} is the resulting which accounts for the 
+cluster sample-design with unequal probability of selection
+by adding the argument \code{clusters = ~CID}.
+This informs the algorithm that observations with equal values of
+\code{CID} are from the same cluster.
+The resulting tree has only the first split on 
+household income of \code{rate_tree0}.
+Both models used a $p$-value of .05, and were unchanged using a value of .01,
+which suggests that we would choose \code{rate_tree1} to make inference, if we
+were concerned about overfitting the data.
+However, if we are more interested in getting accurate predictions and 
+not as worried about overfitting, we might use \code{rate_tree0}.
+
+
+%\section*{Acknowledgments}
+%We would like to acknowledge ... etc.
+
+
+
+\bibliography{rpms_refs}{}
+%\bibliographystyle{plain}
+
+
+
+%\baselineskip=18pt
+%-------------------------------------------------- Appendix ----------------------------------------------------------
+%\section*{Appendix}
+%\begin{appendix}
+%\Appendix    % This makes the section title start with Appendix!
+%\renewcommand{\theequation}{A.\arabic{equation}}
+%\setcounter{equation}{0}
+%
+%\end{appendix}
+
+
+
+%use R command if it says vignette not ascii
+%tools::showNonASCIIfile("/home/goddess/Documents/Research/Machine Learning/Recursive Partition/rpms_0_1_0_9003/vignettes/rpms_2016_11_30.Rnw")
+
+\end{document}

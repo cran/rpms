@@ -23,4 +23,3 @@ list containing the overall effect of the weights on the domain
 Conducts a t-test for the signifcance of the weights on 
               on the domain estimate
 }
-

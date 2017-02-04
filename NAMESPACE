@@ -2,6 +2,7 @@
 
 S3method(predict,rpms)
 S3method(print,rpms)
+export(end_nodes)
 export(in_node)
 export(node_plot)
 export(qtree)

@@ -153,9 +153,9 @@ public use interview data file.
 \item{GASMOCQ}{Expenditure on gasoline and motor oil this quarter}
 } #end describe
 }
+
 \seealso{
 For more information see 
 \url{http://www.bls.gov/cex/2015/csxintvw.pdf}
 }
 \keyword{datasets}
-

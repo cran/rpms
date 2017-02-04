@@ -160,11 +160,12 @@ double peak_cat(arma::vec score, arma::vec var){
 //*********************** end peak functions ********************************
 
 // [[Rcpp::export]] 
-double var_test(arma::mat p_scores, arma::mat mX, arma::vec var, int cat){
+List var_test(arma::mat p_scores, arma::mat mX, arma::vec var, int cat){
   
   uword p = mX.n_cols;
   uword m = p_scores.n_cols-1;
   arma::vec pvals(p);
+  double max_peak=0;
   
   for(uword j=0; j <p; ++j){
     
@@ -191,28 +192,40 @@ double var_test(arma::mat p_scores, arma::mat mX, arma::vec var, int cat){
     uvec s = find(pks>=a);
     pvals(j) = s.n_elem/(float)m;
     
+    if(max_peak<a) max_peak=a;
+    
   }//end model matrix loop
   
-  return(min(pvals));
-  
+  //return(min(pvals));
+  return List::create(
+    Named("pval") = min(pvals),
+    Named("peak") = max_peak
+  );
 }
 
 // [[Rcpp::export]] 
-arma::vec get_pvec(arma::mat p_scores, arma::mat mX, 
+List get_pvec(arma::mat p_scores, arma::mat mX, 
                        arma::mat vars, arma::ivec cat_vec){
                          
   uword p = vars.n_cols;
   
-  arma::vec pvec(p); 
+  arma::vec pvec(p), peaks(p); 
   pvec.fill(datum::inf);
+  peaks.fill(0);
   
   //loop over each variable
   for(uword i=0; i<p; ++i){
    // arma::colvec var vars.col(i);
-    pvec(i) = var_test(p_scores, mX, vars.col(i), cat_vec[i]);
+    List test_results = var_test(p_scores, mX, vars.col(i), cat_vec[i]);
+    pvec(i) = test_results["pval"];
+    peaks(i) = test_results["peak"];
   }
   
-  return(pvec);
+  return List::create(
+    Named("pvec") = pvec,
+    Named("peaks") = peaks
+  );
+  
 }
 
 

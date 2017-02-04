@@ -29,16 +29,16 @@ plots end-node of object of class \code{rpms}
 r1 <-rpms(FINDRETX~EDUC_REF+AGE_REF+BLS_URBN+REGION, data=CE,
      e_equ=FINDRETX~FINCBTAX, clusters=~CID) 
 
-# plot node 2
-node_plot(r1, node=2, data=CE)
+# plot node 2 if it is in tree
+if(2 \%in\% end_nodes(r1))
+  node_plot(r1, node=2, data=CE)
 
-#' # plot node 7
-node_plot(r1, node=7, data=CE)
+#' # plot last end-node
 
+if(6 \%in\% end_nodes(r1))
+  node_plot(r1, node=6, data=CE)
 
-\dontrun{node_plot(r1, node=11, data=CE)}
 
 }
 
 }
-

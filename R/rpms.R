@@ -11,10 +11,10 @@
 #' The algorithm accounts for one-stage of stratification and clustering as
 #' well as unequal probability of selection.
 #' This version does not handle missing values, so only complete cases of a 
-#' dataset is used.
+#' dataset are used.
 #' 
 #' @docType package
-#' @name rpms
+#' @name rpms-package
 #' 
 #' @useDynLib rpms
 #' @importFrom Rcpp sourceCpp

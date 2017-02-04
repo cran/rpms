@@ -24,4 +24,3 @@ list containing coefficients, covariance matrix and the residuals
 \description{
 wrapper function for the C++ function survLm_model
 }
-
