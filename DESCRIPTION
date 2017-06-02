@@ -1,8 +1,8 @@
 Package: rpms
 Type: Package
 Title: Recursive Partitioning for Modeling Survey Data
-Version: 0.2.0
-Date: 2017-02-03
+Version: 0.2.1
+Date: 2017-06-02
 Authors@R: person("daniell", "toth", email="danielltoth@yahoo.com",
     role=c("aut", "cre"))
 Maintainer: daniell toth <danielltoth@yahoo.com>
@@ -20,10 +20,10 @@ License: CC0
 Depends: R (>= 2.10)
 Imports: Rcpp (>= 0.12.3)
 LinkingTo: Rcpp, RcppArmadillo
-RoxygenNote: 6.0.0
+RoxygenNote: 6.0.1
 NeedsCompilation: yes
 LazyData: true
-Packaged: 2017-02-03 16:28:49 UTC; goddess
+Packaged: 2017-06-02 15:23:10 UTC; goddess
 Author: daniell toth [aut, cre]
 Repository: CRAN
-Date/Publication: 2017-02-04 08:42:27
+Date/Publication: 2017-06-02 15:34:34 UTC

@@ -27,8 +27,16 @@ get_loss_cat <- function(sets, cats, x_val, y, mX, weights, M) {
     .Call('rpms_get_loss_cat', PACKAGE = 'rpms', sets, cats, x_val, y, mX, weights, M)
 }
 
-clus_perm <- function(y, weights, clus, M) {
-    .Call('rpms_clus_perm', PACKAGE = 'rpms', y, weights, clus, M)
+clus_perm <- function(res, weights, clus, M) {
+    .Call('rpms_clus_perm', PACKAGE = 'rpms', res, weights, clus, M)
+}
+
+perm <- function(res, weights, M) {
+    .Call('rpms_perm', PACKAGE = 'rpms', res, weights, M)
+}
+
+peak_cat <- function(score, var) {
+    .Call('rpms_peak_cat', PACKAGE = 'rpms', score, var)
 }
 
 var_test <- function(p_scores, mX, var, cat) {

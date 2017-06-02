@@ -77,14 +77,15 @@ get.qtree<-function(f1, n.num=1, title="name", digits=2){
 #' Produces text code to produce tree structure in tex document
 #' Requires using LaTex packages and the following commands in preamble of 
 #' LaTex doc: 
-#' usepackage{lscape}
-#` usepackage{qtree}
+#' usepackage\{lscape\}
+#' usepackage\{tikz-qtree\}
 #'
 #' @param t1 rpms object created by rpms function
 #' @param title string for the top node of the tree
 #' @param label string used for labeling the tree figure
 #' @param caption string used for caption
 #' @param digits integer number of displayed digits 
+#' @param scale factor for scaling size of tree
 #' @examples
 #' {
 #' # get rpms model of mean retirement contribution by several factors
@@ -98,19 +99,25 @@ get.qtree<-function(f1, n.num=1, title="name", digits=2){
 #' @export
 #' @aliases rpms::qtree
 
-qtree<-function(t1, title="rpms", label=NA, caption="", digits=2){
+qtree<-function(t1, title="rpms", label=NA, caption="", digits=2, scale=1){
+
   ls<-ifelse(nrow(t1$frame)>8, 1, 0)
   if(ls==1) cat("\\", "begin{landscape} \n", sep="")
+
   cat("\\", "begin{figure}[ht] \n", sep="")
   cat("\\", "centering \n", sep="")
-  cat("\\", "footnotesize \n", sep="")
-  
-  get.qtree(t1$frame, n.num=1, title=title, digits=digits)
-  
+    
+   cat("\\", "begin{tikzpicture}[scale=", scale, ", ] \n", sep="")
+   cat("\\", "tikzset{every tree node/.style={align=center,anchor=north}} \n", sep="")
+     get.qtree(t1$frame, n.num=1, title=title, digits=digits)
+     
+   cat("\\", "end{tikzpicture} \n", sep="")
+    
   cat("\n")
   cat("\\", "caption{", caption, "} \n", sep="")
   if(!is.na(label))
     cat("\\", "label{", label, "} \n", sep="")
+
   cat("\\", "end{figure} \n", sep="")
   if(ls==1) cat("\\", "end{landscape} \n", sep="")
 }

@@ -10,7 +10,9 @@
 \usepackage{epsfig}
 \usepackage{graphicx}
 \usepackage{lscape}
-\usepackage{qtree}
+\usepackage{tikz-qtree}
+
+%\usepackage{qtree}
 \usepackage{float}
 
 \floatstyle{plain}
@@ -133,7 +135,7 @@ The algorithm assumes a one-stage design that accounts
 for stratification and clustering 
 as well as unequal probability of selection. 
 
-%In section \ref{algorithm} we 
+%In section \ref{algorithm} we
 
 In Section \ref{demos} we will demonstrate the main function of the package, 
 \code{rpms}, which returns an object of class "rpms" and  the methods 

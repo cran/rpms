@@ -5,7 +5,7 @@
 \title{split}
 \usage{
 split(node, data, e_equ, e_fn = survLm, l_fn, X, weights, strata, clusters,
-  bin_size, perm_reps, pval)
+  des_ind, bin_size, perm_reps, pval)
 }
 \arguments{
 \item{node}{is an integer label of the node}
@@ -27,6 +27,8 @@ node.  The function should}
 
 \item{clusters}{lable of the clusters containing the observation}
 
+\item{des_ind}{vector of 0 and 1 s designating design type}
+
 \item{bin_size}{integer specifying the minimum number of observations each
 node must contain}
 
@@ -41,3 +43,4 @@ list containing split information
 \description{
 internal split function for RPMS
 }
+\keyword{internal}

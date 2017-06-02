@@ -1,4 +1,4 @@
-### R code from vignette source 'rpms_2017_02_03.Rnw'
+### R code from vignette source 'rpms_2017_02_10.Rnw'
 
 ###################################################
 ### code chunk number 1: R_options

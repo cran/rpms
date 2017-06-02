@@ -17,7 +17,10 @@
 #' 
 #' @aliases domain_est
 #'
-# #' @export
+# @export
+#' 
+#' 
+#' @keywords internal
 domain_est<-function(t1, domdat, weights=rep(1,nrow(domdat)), theta="mean"){
   
   if(theta=="mean"){
@@ -61,7 +64,8 @@ domain_est<-function(t1, domdat, weights=rep(1,nrow(domdat)), theta="mean"){
 #' 
 #' @aliases ttest
 #'
-# #' @export
+#' @keywords internal
+#' export
 #' 
 ttest<-function(t1, data, dom, weights){
   # require("MASS")
@@ -116,6 +120,8 @@ ttest<-function(t1, data, dom, weights){
 #' @import stats
 #' 
 #' @aliases Wald test
+#' 
+#' @keywords internal
 #' 
 Wtest<-function(t1, data, weights=rep(1, nrow(data)),
                 strata=rep(1L, nrow(data)), clusters=(1L:nrow(data))){

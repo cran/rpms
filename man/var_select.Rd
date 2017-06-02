@@ -5,8 +5,8 @@
 \title{var_select}
 \usage{
 var_select(e_equ, data, e_fn = survLm_fit, weights = rep(1, nrow(data)),
-  strata = rep(1, nrow(data)), clusters = (1:nrow(data)), X, perm_reps,
-  pval)
+  strata = rep(1, nrow(data)), clusters = (1:nrow(data)), des_ind, X,
+  perm_reps, pval)
 }
 \arguments{
 \item{e_equ}{formula object of the estimating equation}
@@ -35,3 +35,4 @@ vector of variable names with lowest estimated p-value
 \description{
 selects variables likely to result in the best split
 }
+\keyword{internal}

@@ -5,7 +5,8 @@
 \alias{rpms::qtree}
 \title{qtree}
 \usage{
-qtree(t1, title = "rpms", label = NA, caption = "", digits = 2)
+qtree(t1, title = "rpms", label = NA, caption = "", digits = 2,
+  scale = 1)
 }
 \arguments{
 \item{t1}{rpms object created by rpms function}
@@ -17,6 +18,8 @@ qtree(t1, title = "rpms", label = NA, caption = "", digits = 2)
 \item{caption}{string used for caption}
 
 \item{digits}{integer number of displayed digits}
+
+\item{scale}{factor for scaling size of tree}
 }
 \description{
 Code to write a latex qtree plot
@@ -25,7 +28,8 @@ uses linearize as a guide
 Produces text code to produce tree structure in tex document
 Requires using LaTex packages and the following commands in preamble of 
 LaTex doc: 
-usepackage{lscape}
+usepackage\{lscape\}
+usepackage\{tikz-qtree\}
 }
 \examples{
 {

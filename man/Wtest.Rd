@@ -26,3 +26,4 @@ list containing F-statistic and corresponding p-value
 \description{
 Conducts a Wald's test for the significance of the weights on the splits
 }
+\keyword{internal}

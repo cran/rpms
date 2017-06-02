@@ -67,16 +67,41 @@ BEGIN_RCPP
 END_RCPP
 }
 // clus_perm
-arma::mat clus_perm(arma::vec y, arma::vec weights, arma::uvec clus, arma::uword M);
-RcppExport SEXP rpms_clus_perm(SEXP ySEXP, SEXP weightsSEXP, SEXP clusSEXP, SEXP MSEXP) {
+arma::mat clus_perm(arma::vec res, arma::vec weights, arma::uvec clus, arma::uword M);
+RcppExport SEXP rpms_clus_perm(SEXP resSEXP, SEXP weightsSEXP, SEXP clusSEXP, SEXP MSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec >::type y(ySEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type res(resSEXP);
     Rcpp::traits::input_parameter< arma::vec >::type weights(weightsSEXP);
     Rcpp::traits::input_parameter< arma::uvec >::type clus(clusSEXP);
     Rcpp::traits::input_parameter< arma::uword >::type M(MSEXP);
-    rcpp_result_gen = Rcpp::wrap(clus_perm(y, weights, clus, M));
+    rcpp_result_gen = Rcpp::wrap(clus_perm(res, weights, clus, M));
+    return rcpp_result_gen;
+END_RCPP
+}
+// perm
+arma::mat perm(arma::vec res, arma::vec weights, arma::uword M);
+RcppExport SEXP rpms_perm(SEXP resSEXP, SEXP weightsSEXP, SEXP MSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type res(resSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type weights(weightsSEXP);
+    Rcpp::traits::input_parameter< arma::uword >::type M(MSEXP);
+    rcpp_result_gen = Rcpp::wrap(perm(res, weights, M));
+    return rcpp_result_gen;
+END_RCPP
+}
+// peak_cat
+double peak_cat(arma::vec score, arma::vec var);
+RcppExport SEXP rpms_peak_cat(SEXP scoreSEXP, SEXP varSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type score(scoreSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type var(varSEXP);
+    rcpp_result_gen = Rcpp::wrap(peak_cat(score, var));
     return rcpp_result_gen;
 END_RCPP
 }

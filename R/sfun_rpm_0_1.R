@@ -164,8 +164,7 @@ node_plot<-function(t1, node, data, variable=NA, ...){
 #' 
 #' @aliases predict
 #'
-#' @examples
-#' {
+#' @examples{
 #' # get rpms model of mean retirement contribution by several factors
 #' r1 <- rpms(FINDRETX~EDUC_REF+AGE_REF+BLS_URBN+REGION, data = CE)
 #' 

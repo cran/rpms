@@ -14,7 +14,7 @@
 
 
 
-#################  Front End to survLm  ###################
+#################  Front End to survLm_model  ###################
 #' survLm
 #' 
 #' @param e_equ formula representing the equation to fit
@@ -29,6 +29,7 @@
 #' 
 #' @aliases survLm
 #'
+#' @keywords internal
 survLm<-function(e_equ, data, weights=rep(1, nrow(data)), strata=rep(1L, nrow(data)), clusters=(1L:nrow(data))){
   
   if(length(all.vars(e_equ))> nrow(data)) stop("Number of parameters p > n")
@@ -63,22 +64,27 @@ survLm<-function(e_equ, data, weights=rep(1, nrow(data)), strata=rep(1L, nrow(da
 #' 
 #' 
 #' @aliases var_select
-
+#' 
+#' @keywords internal
+#' 
 var_select<-function(e_equ, data, e_fn=survLm_fit, weights=rep(1, nrow(data)), 
-                     strata=rep(1, nrow(data)), clusters=(1:nrow(data)), 
+                     strata=rep(1, nrow(data)), clusters=(1:nrow(data)), des_ind,
                      X, perm_reps, pval){
   
-  if(perm_reps < 1) return(NULL)
-  
+  if(perm_reps <= 1) return(NULL)
   
   y<-data[,all.vars(e_equ)[1]]
   mX<-model.matrix(e_equ, data)
   
-  res <- survLm_fit(y, mX, weights)$residuals
+  res <- survLm_fit(y=y, X=mX, weights=weights)$residuals
   #res <- eval(call(e_fn, y, mX, weights))$residuals
+
+  #get permuted residuals
+ if(des_ind[3])  
+   pres <- clus_perm(res=res, weights=weights, clus=clusters, M=perm_reps)
+  else  pres <- perm(res=res, weights=weights, M=perm_reps)
   
-  pres <- clus_perm(y=res, weights=weights, clus=clusters, M=perm_reps)
-  
+  # mark categorical variables
   if(length(X)==1) cat_vec <- is.factor(data[,X])
   else
     cat_vec <- sapply(data[, X], FUN= function(x) is.factor(x))
@@ -89,29 +95,20 @@ var_select<-function(e_equ, data, e_fn=survLm_fit, weights=rep(1, nrow(data)),
   else
    data[,X[which(cat_vec)]] <- sapply(data[,X[which(cat_vec)]], as.integer)
 
+  # get the peaks and p-val for each variable in X
   ptest <- get_pvec(p_scores=pres, mX=mX,  vars=as.matrix(data[, X]), 
                    cat_vec=cat_vec)
-  #print(X)
-  #print(pvec)  
- 
-#  ix <- which.min(ptest$pvec)
-
- # if(ptest$pvec[ix] <= pval)   return(X[ix]) else return(NULL)
   
   min_p <- min(ptest$pvec)
   
   if(min_p > pval) return(NULL) else {
     ix <- which(ptest$pvec == min_p)
-    
+
     nix <- length(ix)
     if(nix== 1) return(X[ix]) else
-      return(X[ix[which.max(ptest$peak)]])
-    
+      return(X[ix[which.max(ptest$peak[ix])]])
   }
   
-  
-  #if(min(pvec)<Inf) return(X[which(pvec==min(pvec))]) else return(NULL)
-
 }
 ##################################  End var.select #############################
 
@@ -140,6 +137,7 @@ var_select<-function(e_equ, data, e_fn=survLm_fit, weights=rep(1, nrow(data)),
 #' @param weights the sample weights for each observation 
 #' @param strata lable of the strata containing the observation
 #' @param clusters lable of the clusters containing the observation
+#' @param des_ind vector of 0 and 1 s designating design type
 #' @param bin_size integer specifying the minimum number of observations each
 #'        node must contain 
 #' @param perm_reps integer specifying the number of permuations
@@ -150,16 +148,19 @@ var_select<-function(e_equ, data, e_fn=survLm_fit, weights=rep(1, nrow(data)),
 #' 
 #' @description  internal split function for RPMS
 #' 
+#' @keywords internal
+#' 
 split<-function(node, data, e_equ, e_fn=survLm, l_fn, X, 
-                weights, strata, clusters, bin_size, perm_reps, pval){
+                weights, strata, clusters, des_ind,
+                bin_size, perm_reps, pval){
 
   n<-nrow(data)
   
   if(n<=2*bin_size || length(all.vars(e_equ))> nrow(data)) return(NULL)
   else {
     
-    x <- var_select(e_equ, data, e_fn, weights, 
-                    strata, clusters, X, perm_reps=perm_reps, pval=pval) 
+    x <- var_select(e_equ=e_equ, data=data, e_fn=e_fn, weights=weights, 
+                    strata=strata, clusters=clusters, des_ind, X=X, perm_reps=perm_reps, pval=pval) 
     
     if(is.null(x)) return(NULL)
     
@@ -220,16 +221,39 @@ split<-function(node, data, e_equ, e_fn=survLm, l_fn, X,
       } # -----end  numeric--       
       
     #-------------------Categorical variables ---------------------------
-      else { 
-        x.cats<-unique(data[,x])
-        p<-length(x.cats)  
+    else { 
+      x.cats<-sort(unique(data[,x]))
+      p<-length(x.cats)  
+      
+      if(e_fn=="survLm")
         
-        if(e_fn=="survLm"){
-          power.set<-as.matrix(expand.grid(as.data.frame(matrix(rep(c(0, 1), p), 2, p))))
+        # ----if estimating y~1 then check ordered categories --
+        if(length(all.vars(e_equ))==1) # estimating mean
+        { 
+          power.set <- matrix(0, nrow=(p-1), ncol=p)
+          cat_means <- rep(Inf, p)
+          for(i in 1:p) cat_means[i] <- mean(y[which(data[,x]==x.cats[i])])
+      
+          for(i in 1:(p-1))
+            {
+            cmin <- which.min(cat_means)
+            power.set[i:(p-1), cmin] <- 1
+            cat_means[cmin] <- Inf
+          }#end for loop to create p-1 different splits
+          
+          
           l.vec<-t(get_loss_cat(power.set, x.cats, data[,x], y, mX, weights, M=bin_size))
-        } #end if survLm
-        
-        else{return(NULL)}# end else slow loop
+        } #end if mean
+      # ---- end of cat if y~1 ----------------------------------- 
+      
+      else  #not estimating a mean
+      {
+        if(p>12) warning("Categorical variable ", x, " has > than 12 categories.  This may take a long time when fitting models on each node.")
+        power.set<-as.matrix(expand.grid(as.data.frame(matrix(rep(c(0, 1), p), 2, p))))
+        l.vec<-t(get_loss_cat(power.set, x.cats, data[,x], y, mX, weights, M=bin_size))
+      } #end if not mean
+      
+      else{return(NULL)} # end else not "survLm"
         
         #------ Find the miminimum split and add left and right nodes to frame 
         if(min(l.vec)<Inf){
@@ -272,10 +296,10 @@ split<-function(node, data, e_equ, e_fn=survLm, l_fn, X,
       
    
       return(rbind(sp.L, split(sp.L$node, data[s,], e_equ, e_fn, l_fn, X, 
-                               weights[s], strata[s], clusters[s], 
+                               weights[s], strata[s], clusters[s], des_ind,
                                bin_size, perm_reps, pval), 
                    sp.R, split(sp.R$node, data[-s,], e_equ, e_fn, l_fn, X, 
-                               weights[-s], strata[-s], clusters[-s], 
+                               weights[-s], strata[-s], clusters[-s], des_ind,
                                bin_size, perm_reps, pval))) 
       
     
@@ -512,16 +536,29 @@ rpms<-function(rp_equ, data, weights=~1, strata=~1, clusters=~1,
         stop("Dependent variable must be same for rp_equ as e_equ") else
           if(!all(all.vars(rp_equ) %in% names(data)))
             stop("e_equ contains variables that are not in the data set")
-  
 
-  if(is.numeric(weights)) stopifnot(length(weights)==nrow(data)) else
-    if(length(all.vars(weights))==0) {weights <- rep(1, nrow(data))} else
-      if(all.vars(weights)[1] %in% names(data)){
+
+  if(is.numeric(weights)) { 
+    if(length(weights)!=nrow(data)) stop("Number of strata labels != rows of data")
+  } else
+    
+    if(length(all.vars(weights))==0) {
+      weights <- rep(1, nrow(data))
+    } else 
+      
+      if(all.vars(weights)[1] %in% names(data))
+      {
         des$weights=weights
         weights <- as.numeric(data[,all.vars(weights)[1]])
-        des_ind[1] <- if(var(weights)>0) TRUE } else 
-          stop(paste("Problem with weights:",
-                     all.vars(weights)[1], "not in data set"))
+        if(var(weights)>0) {
+          des_ind[1] <- TRUE 
+        } 
+        
+      } else 
+        
+        stop(paste("Problem with weights:",
+                   all.vars(weights)[1], "not in data set"))
+  
   
   if(is.numeric(strata) | is.factor(strata)){
     strata<-as.integer(strata)
@@ -570,20 +607,24 @@ rpms<-function(rp_equ, data, weights=~1, strata=~1, clusters=~1,
   mX<-model.matrix(e_equ, ndat)
   if(det(t(mX)%*%mX)==0) stop("Model matrix is singular")
   
+  
   #--- get root node -------#  
   fn<-survLm_model(y=as.matrix(y), X=mX, weights=weights, strata=strata, 
                    clusters=clusters)
+  
   
   frame<-data.frame(node=1, cat=NA, var="Root", xval=NA, n=nrow(data)) 
   frame$value <- list(fn$coefficients)
   frame$loss <- l_fn(fn$residuals)
   frame$cvar <- list(diag(fn$covM))
   frame$mean=mean(y)
- 
+  
   #-----  starts recursive spliting ----
   frame <- rbind(frame, 
-                 split(1, ndat, e_equ, e_fn, l_fn, vX, 
-                       weights, strata, clusters, bin_size, perm_reps, pval))
+                 split(node=1, data=ndat, e_equ=e_equ, e_fn=e_fn, l_fn=l_fn, X=vX, 
+                       weights=weights, strata=strata, clusters=clusters, des_ind, 
+                       bin_size=bin_size, perm_reps=perm_reps, pval=pval))
+
   
   frame <- mark_ends(frame) # puts an 'E' after each end node on the frame
   
@@ -595,7 +636,7 @@ rpms<-function(rp_equ, data, weights=~1, strata=~1, clusters=~1,
   des_string <- if(sum(des_ind)==0) "Simple Random Sample"
                 else paste(c("unequal probability of selection", "stratified", "cluster")[which(des_ind)], "sample design")
   
-  callvals <-list(rp_equ, e_equ, des_string, perm_reps, pval)
+  callvals <-list(rp_equ=rp_equ, e_equ=e_equ, des_string=des_string, perm_reps=perm_reps, pval=pval)
     
   t1 <- list(rp_equ=rp_equ, e_equ=e_equ, frame=frame, ln_split=lt, 
              end_nodes=endnodes, coef=endnodes$coef, callvals=callvals)

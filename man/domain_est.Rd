@@ -22,3 +22,4 @@ list containing F-statistic and corresponding p-value
 Produces estimates of domain mean or total along with the
               variance estimate based on estimated regression tree
 }
+\keyword{internal}
