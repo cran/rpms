@@ -23,3 +23,4 @@ list containing coefficients, covariance matrix and the residuals
 \description{
 Fit a linear model using data collected from a complex sample
 }
+\keyword{internal}

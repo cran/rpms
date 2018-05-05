@@ -84,13 +84,17 @@ get.qtree<-function(f1, n.num=1, title="name", digits=2){
 #' @param title string for the top node of the tree
 #' @param label string used for labeling the tree figure
 #' @param caption string used for caption
-#' @param digits integer number of displayed digits 
-#' @param scale factor for scaling size of tree
+#' @param digits integer number of displayed digits
+#' @param scale numeric factor for scaling size of tree
+#' @param lscape boolean to display tree in landscape mode
 #' @examples
 #' {
-#' # get rpms model of mean retirement contribution by several factors
-#' r1 <-rpms(FINDRETX~EDUC_REF+AGE_REF+BLS_URBN+REGION, data=CE,
-#'      e_equ=FINDRETX~FINCBTAX, clusters=~CID) 
+#' # model mean of retirement account value for households with reported 
+#' # retirment account values > 0 using a binary tree while accounting for 
+#' # clusterd data and sample weights.
+#' 
+#' s1<- which(CE$IRAX > 0)
+#' r1 <-rpms(IRAX~EDUCA+AGE+BLS_URBN, data = CE[s1,],  weights=~FINLWT21, clusters=~CID) 
 #' 
 #' # get Latex code
 #' qtree(r1)
@@ -99,12 +103,11 @@ get.qtree<-function(f1, n.num=1, title="name", digits=2){
 #' @export
 #' @aliases rpms::qtree
 
-qtree<-function(t1, title="rpms", label=NA, caption="", digits=2, scale=1){
+qtree<-function(t1, title="rpms", label=NA, caption="", digits=2, scale=1, lscape=FALSE){
 
-  ls<-ifelse(nrow(t1$frame)>8, 1, 0)
-  if(ls==1) cat("\\", "begin{landscape} \n", sep="")
+  if(lscape) cat("\\", "begin{landscape} \n", sep="")
 
-  cat("\\", "begin{figure}[ht] \n", sep="")
+  cat("\\", "begin{figure}[htb] \n", sep="")
   cat("\\", "centering \n", sep="")
     
    cat("\\", "begin{tikzpicture}[scale=", scale, ", ] \n", sep="")
@@ -114,12 +117,12 @@ qtree<-function(t1, title="rpms", label=NA, caption="", digits=2, scale=1){
    cat("\\", "end{tikzpicture} \n", sep="")
     
   cat("\n")
-  cat("\\", "caption{", caption, "} \n", sep="")
+  cat("\\", "caption{","\\", "small ", caption, "} \n", sep="")
   if(!is.na(label))
     cat("\\", "label{", label, "} \n", sep="")
 
   cat("\\", "end{figure} \n", sep="")
-  if(ls==1) cat("\\", "end{landscape} \n", sep="")
+  if(lscape) cat("\\", "end{landscape} \n", sep="")
 }
 
 ###################################### end qtree  ##############################################################################

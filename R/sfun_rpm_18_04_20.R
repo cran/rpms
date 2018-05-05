@@ -11,11 +11,23 @@
 #' 
 #' @param t1 \code{rpms} object
 #' 
-#' @description  Get vector end-node labels
+#' @description  Get vector of end-node labels
 #' 
-#' @return vector of lables of end-nodes.
+#' @return vector of lables for each end-node.
 #' 
 #' @aliases rpms::end_nodes
+#' 
+#' @examples 
+#' {
+#' # model mean of retirement account value for households with reported 
+#' # retirment account values > 0 using a binary tree while accounting for 
+#' # clusterd data and sample weights.
+#' 
+#' s1<- which(CE$IRAX > 0)
+#' r1 <-rpms(IRAX~EDUCA+AGE+BLS_URBN, data = CE[s1,],  weights=~FINLWT21, clusters=~CID) 
+#'  
+#'  end_nodes(r1)
+#' }
 #' 
 #' @export
 end_nodes<-function(t1){
@@ -33,23 +45,29 @@ end_nodes<-function(t1){
 #'       partitioning. 
 #' 
 #' @description  Get index of elements in dataframe that are in the specified 
-#'               end-node of an \code{rpms} object
+#'               end-node of an \code{rpms} object.  A "which" function for end-nodes.
 #' 
-#' @return vector of indexes for observations in the end-node.
+#' @return vector of indexes for observations in the end-node. 
 #' 
 #' @aliases rpms::in_node
 #' 
 #' @examples
-#' # model linear fit between retirement contributions and amount of income 
-#' r1 <-rpms(FINDRETX~EDUC_REF+AGE_REF+BLS_URBN+REGION, data=CE,
-#'      e_equ=FINDRETX~FINCBTAX, clusters=~CID) 
+#' {
+#' # model mean of retirement account value for households with reported 
+#' # retirment account values > 0 using a binary tree while accounting for 
+#' # clusterd data and sample weights.
 #' 
-#' if(2 %in% end_nodes(r1))
-#'   summary(CE$FSALARYX[in_node(node=2, r1, data=CE)])
+#' s1<- which(CE$IRAX > 0)
+#' r1 <-rpms(IRAX~EDUCA+AGE+BLS_URBN, data = CE[s1,],  weights=~FINLWT21, clusters=~CID) 
+#' 
+#' # Get summary statistics of CUTENURE for households in end-nodes 7 and 8 of the tree
 #'
-#' if(6 %in% end_nodes(r1))
-#'   summary(CE$FSALARYX[in_node(node=6, r1, data=CE)])
-#'
+#' if(7 %in% end_nodes(r1)) 
+#'   summary(CE$CUTENURE[in_node(node=7, r1, data=CE[s1,])])
+#' if(8 %in% end_nodes(r1)) 
+#'   summary(CE$CUTENURE[in_node(node=8, r1, data=CE[s1,])])
+#' }
+#' 
 #' @export 
 in_node<-function(node, t1, data){
   
@@ -74,8 +92,6 @@ in_node<-function(node, t1, data){
 ################################## node_plot ##################################
 #' node_plot
 #' 
-#' 
-#'
 #' @param t1 \code{rpms} object
 #' @param node integer label of the desired end-node. 
 #' @param data data.frame that includes variables used in rp_equ, e_equ, 
@@ -92,19 +108,20 @@ in_node<-function(node, t1, data){
 #' 
 #' @examples{
 #' 
-#' # model linear fit between retirement contributions and amount of income 
-#' r1 <-rpms(FINDRETX~EDUC_REF+AGE_REF+BLS_URBN+REGION, data=CE,
-#'      e_equ=FINDRETX~FINCBTAX, clusters=~CID) 
+#' # model mean of retirement account value for households with reported 
+#' # retirment account values > 0 using a binary tree while accounting for 
+#' # clusterd data and sample weights.
 #' 
-#' # plot node 2 if it is in tree
-#' if(2 %in% end_nodes(r1))
-#'   node_plot(r1, node=2, data=CE)
+#' s1<- which(CE$IRAX > 0)
+#' r1 <-rpms(IRAX~EDUCA+AGE+BLS_URBN, data = CE[s1,],  weights=~FINLWT21, clusters=~CID) 
 #' 
-#' #' # plot last end-node
-#' 
+#' # plot node 6 if it is an end-node of the tree
 #' if(6 %in% end_nodes(r1))
-#'   node_plot(r1, node=6, data=CE)
+#'   node_plot(t1=r1, node=6, data=CE[s1,])
 #' 
+#' # plot node 6 if it is an end-node of the tree
+#' if(8 %in% end_nodes(r1))
+#'   node_plot(t1=r1, node=8, data=CE[s1,])
 #' 
 #' }
 #'
@@ -165,11 +182,16 @@ node_plot<-function(t1, node, data, variable=NA, ...){
 #' @aliases predict
 #'
 #' @examples{
-#' # get rpms model of mean retirement contribution by several factors
-#' r1 <- rpms(FINDRETX~EDUC_REF+AGE_REF+BLS_URBN+REGION, data = CE)
+#' 
+#' # get rpms model of mean Soc Security income for families headed by a 
+#' # retired person by several factors
+#' r1 <-rpms(SOCRRX~EDUCA+AGE+BLS_URBN+REGION, 
+#'           data=CE[which(CE$INCNONWK==1),], clusters=~CID) 
+#' 
+#' r1
 #' 
 #' # first 10 predicted means
-#' predict(r1, CE[1:10, ])
+#' predict(r1, CE[10:20, ])
 #' 
 #' }
 #'
@@ -178,24 +200,66 @@ predict.rpms<-function(object, newdata, ...){
   
  # pars<-list(...)  #currently does not take other parameters
   
-#  if("newdata" %in%)
   t1<-object
   
   new_equ <- t1$e_equ[-2]
+  vX=all.vars(t1$rp_equ)[-1]
+  varlist <- unique(c(all.vars(t1$rp_equ[-1]), all.vars(t1$e_equ)[-1]))  
+
+  newdata<-newdata[,varlist, drop=FALSE]
+  
+  # ------------------identify categorical variable ------
+  # need to handle length 1 separately
+  if(length(vX)==1) {
+    cat_vec <- is.factor(newdata[,vX])
+    } 
+  else
+    cat_vec <- sapply(newdata[,vX], FUN=is.factor)
+  
+  n_cats<-length(which(cat_vec))
+  
+  #---------- There are categorical variables ------------
+  if(n_cats>0){
+    
+    # ----- function to turn NA into ? category
+    fn_q <- function(x){
+      #x<-as.integer(x)
+      #x[which(is.na(x))]<- (min(x, na.rm=TRUE)-1)
+      nas <- which(is.na(x))
+      if(length(nas>0)){
+        x <- factor(x, levels=c(levels(x), "?"))
+        x[nas]<- factor("?")
+      }
+      return(as.factor(x))
+    } # end internal function fn
+    
+    # ---------- now turn each NA into ? category
+    if(length(which(cat_vec))==1) {
+      newdata[,vX[which(cat_vec)]] <- fn_q(newdata[,vX[which(cat_vec)]])
+    }
+    else{
+      newdata[,vX[which(cat_vec)]] <- lapply(newdata[,vX[which(cat_vec)]], fn_q)
+    }
+  } #end if n_cats>0
+  
+  #newdata <- na.omit(newdata) #remove any other missing
+  if(length(which(is.na(newdata)))>0) stop("Remove any missing in numeric variables")
   
   y<-numeric(nrow(newdata)) #vector for new y values
   
   bin <- 2^(0:(nrow(t1$ln_split)-1)) #vector 1, 2, 4, 8 ... 2^(p-1)
   ends <- as.matrix(rowSums(t(t(covariates(splits=t1$ln_split, newdata))*bin)))
-  
+
   get_y<-function(end){  
+    
     beta <- unlist(t1$coef[which(t1$end_nodes$node_index[1,]==end)])
-    X <- model.matrix(new_equ, newdata[which(ends==end), ]) 
+    X <- model.matrix(new_equ, newdata[which(ends==end), ,drop=FALSE]) 
     y[ends==end]<-X %*% beta
     
     return(y)
   }
 
+  
   return(rowSums(apply(unique(ends), 1, get_y)))                
   
 }
@@ -226,11 +290,21 @@ print.rpms<-function(x, ...){
   print(t1$e_equ, showEnv=FALSE)
   cat("\n")
 
-  if(length(all.vars(t1$e_equ))==1){ #no e_equ just show node means 
-    sptab<-cbind(t1$ln_split, t1$ln_coef, sqrt(diag(t1$ln_coef_cov)))
-    colnames(sptab)<-c("Splits", "Coefficients", "SE")
-    print(sptab, quote=F, zero.print=".")
-    cat("\n \n")
+  if(length(all.vars(t1$e_equ))==1){ #no e_equ just show node means
+    
+    if("ln_coef_cov" %in% names(t1)){ #if it has a cov matrix
+      sptab<-cbind(t1$ln_split, t1$ln_coef, sqrt(diag(t1$ln_coef_cov)))
+      colnames(sptab)<-c("Splits", "Coefficients", "SE")
+      print(sptab, quote=F, zero.print=".")
+      cat("\n \n")
+    }
+    else { #does not have cov mat
+      sptab<-cbind(t1$ln_split, t1$ln_coef)
+      colnames(sptab)<-c("Splits", "Coefficients")
+      print(sptab, quote=F, zero.print=".")
+      cat("\n \n")
+    }
+
   
     } else { #e_equ is provided
       #make matrix of estimated coefficients (colums) for each end node (row)

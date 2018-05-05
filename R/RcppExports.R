@@ -2,7 +2,7 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 survLm_fit <- function(y, X, weights) {
-    .Call('rpms_survLm_fit', PACKAGE = 'rpms', y, X, weights)
+    .Call('_rpms_survLm_fit', PACKAGE = 'rpms', y, X, weights)
 }
 
 #' Fit a linear model using data collected from a complex sample
@@ -15,35 +15,29 @@ survLm_fit <- function(y, X, weights) {
 #' 
 #' @return list containing coefficients, covariance matrix and the residuals
 #' 
+#' @keywords internal
+#' 
 survLm_model <- function(y, X, weights, strata, clusters) {
-    .Call('rpms_survLm_model', PACKAGE = 'rpms', y, X, weights, strata, clusters)
+    .Call('_rpms_survLm_model', PACKAGE = 'rpms', y, X, weights, strata, clusters)
 }
 
-get_loss <- function(x_val, y, mX, weights, M) {
-    .Call('rpms_get_loss', PACKAGE = 'rpms', x_val, y, mX, weights, M)
+get_loss <- function(x_val, uq_xs, y, mX, weights, M) {
+    .Call('_rpms_get_loss', PACKAGE = 'rpms', x_val, uq_xs, y, mX, weights, M)
 }
 
 get_loss_cat <- function(sets, cats, x_val, y, mX, weights, M) {
-    .Call('rpms_get_loss_cat', PACKAGE = 'rpms', sets, cats, x_val, y, mX, weights, M)
+    .Call('_rpms_get_loss_cat', PACKAGE = 'rpms', sets, cats, x_val, y, mX, weights, M)
 }
 
-clus_perm <- function(res, weights, clus, M) {
-    .Call('rpms_clus_perm', PACKAGE = 'rpms', res, weights, clus, M)
+rbind_splits <- function(split1, split2) {
+    .Call('_rpms_rbind_splits', PACKAGE = 'rpms', split1, split2)
 }
 
-perm <- function(res, weights, M) {
-    .Call('rpms_perm', PACKAGE = 'rpms', res, weights, M)
+get_node <- function(node, cat, vname, y, mxval, s, modfit) {
+    .Call('_rpms_get_node', PACKAGE = 'rpms', node, cat, vname, y, mxval, s, modfit)
 }
 
-peak_cat <- function(score, var) {
-    .Call('rpms_peak_cat', PACKAGE = 'rpms', score, var)
-}
-
-var_test <- function(p_scores, mX, var, cat) {
-    .Call('rpms_var_test', PACKAGE = 'rpms', p_scores, mX, var, cat)
-}
-
-get_pvec <- function(p_scores, mX, vars, cat_vec) {
-    .Call('rpms_get_pvec', PACKAGE = 'rpms', p_scores, mX, vars, cat_vec)
+split_rpms <- function(node, y, mX, X, vnames, cat_vec, weights, strata, clusters, des_ind, bin_size, perm_reps, pval) {
+    .Call('_rpms_split_rpms', PACKAGE = 'rpms', node, y, mX, X, vnames, cat_vec, weights, strata, clusters, des_ind, bin_size, perm_reps, pval)
 }
 

@@ -6,11 +6,14 @@
 
 * split on missing as category?
      * if category = easy
+      - Done 4/20/2018
      * if numeric try as +\infty or -\infty
+       - does this make sense?
 
 * provide basic plot method
 
 * do all of split entirely in C++
+  - Done 1/20/2018
 
 
 ***

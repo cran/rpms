@@ -1,4 +1,4 @@
-### R code from vignette source 'rpms_2017_02_10.Rnw'
+### R code from vignette source 'rpms_2018_01_22.Rnw'
 
 ###################################################
 ### code chunk number 1: R_options
@@ -145,8 +145,8 @@ iid_reg
 ###################################################
 ### code chunk number 12: get_new_data
 ###################################################
-pre1 <- sample(10000, 8)
-new <- as.data.frame.array(simd[pre1, -c(1, 2, 10)], row.names=1:8)
+pre1 <- sample(N, 8)
+new <- as.data.frame.array(simd[pre1, c("x", "va", "vb", "vc", "vd", "ve", "vf")], row.names=1:8)
 new[,"x"] <- round(new[,"x"], 2)
 
 
@@ -210,13 +210,13 @@ node_plot(iid_reg, node = 2, data = simd[s0,])
 ###################################################
 ### code chunk number 21: CE_data
 ###################################################
-ce_n <- nrow(CE)
-ce_p <- ncol(CE)
-
-workers <- which(CE$FSALARYX>0)
-workers_n <-length(workers)
-
-clus_n <- length(unique(CE$CID[workers]))
+ ce_n <- nrow(CE)
+ ce_p <- ncol(CE)
+# 
+# workers <- which(CE$FSALARYX>0)
+# workers_n <-length(workers)
+# 
+clus_n <- length(unique(CE$CID))
 
 
 
@@ -224,15 +224,15 @@ clus_n <- length(unique(CE$CID[workers]))
 ### code chunk number 22: ce_tree
 ###################################################
 
-CE$saver <- ifelse(CE$FINDRETX>0, 1, 0)
-
-rate_tree0 <- 
-  rpms(rp_equ = saver~FAM_SIZE+FINCBTAX+NO_EARNR+PERSOT64+CUTENURE+VEHQ+REGION, 
-                weights = ~FINLWT21, data = CE[workers,], pval=.01) 
-
-rate_tree1 <- 
-  rpms(rp_equ = saver~FAM_SIZE+FINCBTAX+NO_EARNR+PERSOT64+CUTENURE+VEHQ+REGION, 
-                weights = ~FINLWT21, clusters = ~CID, data = CE[workers,], pval=.01) 
+# CE$saver <- ifelse(CE$FINDRETX>0, 1, 0)
+# 
+# rate_tree0 <- 
+#   rpms(rp_equ = saver~FAM_SIZE+FINCBTAX+NO_EARNR+PERSOT64+CUTENURE+VEHQ+REGION, 
+#                 weights = ~FINLWT21, data = CE[workers,], pval=.01) 
+# 
+# rate_tree1 <- 
+#   rpms(rp_equ = saver~FAM_SIZE+FINCBTAX+NO_EARNR+PERSOT64+CUTENURE+VEHQ+REGION, 
+#                 weights = ~FINLWT21, clusters = ~CID, data = CE[workers,], pval=.01) 
 
 
 
@@ -240,8 +240,8 @@ rate_tree1 <-
 ### code chunk number 23: ce_tree_result
 ###################################################
 
-rate_tree0     
-
-rate_tree1
+# rate_tree0     
+# 
+# rate_tree1
 
 

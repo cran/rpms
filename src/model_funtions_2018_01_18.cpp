@@ -1,21 +1,26 @@
+// [[Rcpp::depends(RcppArmadillo)]]
 #include <RcppArmadillo.h>
 #include<Rcpp.h>
 
 using namespace Rcpp;
 using namespace arma;
+using namespace std;
+
+
+//############################## BREAK UP INTO SEPARATE FILE  var select ######################################################################
 
 // [[Rcpp::export]] 
 List survLm_fit(arma::colvec y, arma::mat X, arma::colvec weights){
-   
+  
   //weights = sqrt(weights);
   arma::mat wX = X;
   wX.each_col() %= sqrt(weights);  // multiply each column by sqrt(weights)
- 
-  arma::mat iA = arma::trans(wX)*wX;
-
-    // check for colinearitiy in X before inverting
-  if(arma::det(iA)==0){ 
   
+  arma::mat iA = arma::trans(wX)*wX;
+  
+  // check for colinearitiy in X before inverting
+  if(arma::det(iA)==0){ 
+    
     arma::colvec coef(X.n_cols, fill::zeros);
     arma::colvec resid(y.n_elem); resid.fill(datum::inf);
     
@@ -35,20 +40,16 @@ List survLm_fit(arma::colvec y, arma::mat X, arma::colvec weights){
     // residuals-- these are unweighted
     arma::colvec resid = y - X*coef;   
     
-    
     return List::create(Rcpp::Named("coefficients") = coef,
                         Rcpp::Named("residuals")    = resid);
   }
-    
-
-}
+  
+} //end survLm_fit
 
 
 //**************** getting design based estimates of std.error for coefficient estimates ***
-
-
 arma::mat survLM_covM(arma::colvec resid, arma::mat X, 
-                      arma::colvec weights, arma::ivec strata, arma::ivec clusters) {
+                      arma::colvec weights, arma::uvec strata, arma::uvec clusters) {
   
   size_t n = X.n_rows, p = X.n_cols; 
   
@@ -63,13 +64,13 @@ arma::mat survLM_covM(arma::colvec resid, arma::mat X,
   }
   else{
     iA = inv(iA);
-
+    
     arma::mat D = X;
     D.each_col() %= resid;  //has weight Wt since X and resid have sqrt(Wt)
     
     arma::mat G(p, p, fill::zeros);
     
-    arma::ivec h_labs=unique(strata);
+    arma::uvec h_labs=unique(strata);
     //cout<<"h_labs is "<< endl << h_labs << endl;
     uword H = h_labs.n_elem;
     
@@ -80,18 +81,18 @@ arma::mat survLM_covM(arma::colvec resid, arma::mat X,
       //cout<<"current strat label is "<<h_labs[h]<<endl;      
       //cout<<"strata index is : \n" << uh << endl;
       
-      arma::ivec ids = unique(clusters.elem(find(strata==h_labs[h])));
+      arma::uvec ids = unique(clusters.elem(find(strata==h_labs[h])));
       uword nh = ids.n_elem;
       
       for(uword i=0; i<nh; ++i ){
         uvec s=find(clusters.elem(uh) == ids[i]);  //in strata h and cluster i 
-
+        
         arma::rowvec dhi = sum(D.rows(s));
         
         G_h += (trans(dhi)*dhi);
         
       }
-  
+      
       if(nh <= 1) {G+=datum::inf;}  // single psu
       else G += (nh/(nh-1))*G_h; // 
       
@@ -103,7 +104,7 @@ arma::mat survLM_covM(arma::colvec resid, arma::mat X,
     
     return covM;
   }
-
+  
 } //End get_CovM
 
 
@@ -118,45 +119,21 @@ arma::mat survLM_covM(arma::colvec resid, arma::mat X,
 //' 
 //' @return list containing coefficients, covariance matrix and the residuals
 //' 
+//' @keywords internal
+//' 
 // [[Rcpp::export]] 
 List survLm_model(arma::colvec y, arma::mat X, arma::colvec weights, 
-                  arma::ivec strata, arma::ivec clusters) {
+                  arma::uvec strata, arma::uvec clusters) {
   
-    List Lnmod = survLm_fit(y, X, weights);
-
-    arma:mat covM = survLM_covM(Lnmod["residuals"], X,
-                                weights, strata, clusters);
-    
-    return List::create(Rcpp::Named("coefficients") = Lnmod["coefficients"],
-                        Rcpp::Named("covM")         = covM,
-                        Rcpp::Named("residuals")    = Lnmod["residuals"]);
+  List Lnmod = survLm_fit(y, X, weights);
   
-}
-
-
-// // [[Rcpp::export]] 
-// List mysplit(uword node, List a){
-//   
-//    if(node>5) return NULL; else {
-//      return List::create(mysplit(2*node, a), mysplit((2*node+1), a));
-//       // a.push_back(mysplit(2*node, a)); 
-//       // a.push_back(mysplit((2*node+1), a));
-//       //return a;
-//    }
-// }
-
-List get_wald(arma::colvec y, arma::mat X) {
+  arma::mat covM = survLM_covM(Lnmod["residuals"], X,
+                              weights, strata, clusters);
   
-  arma::mat iXX = inv(trans(X)*X);
-  arma::colvec coef = iXX*(trans(X)*y);
-  arma::colvec resid = y - X*coef; 
-  int n=y.n_elem;
-  double A=0;
-  
-  for(int i=0; i<n; ++i){
-    A += as_scalar(X.row(i)*trans(X.row(i)));
-  }
-  
-  return(A);
+  return List::create(Rcpp::Named("coefficients") = Lnmod["coefficients"],
+                      Rcpp::Named("covM")         = covM,
+                      Rcpp::Named("residuals")    = Lnmod["residuals"]);
   
 }
+
+//########## end model functions ######################################################################################

@@ -8,7 +8,7 @@ using namespace Rcpp;
 
 // survLm_fit
 List survLm_fit(arma::colvec y, arma::mat X, arma::colvec weights);
-RcppExport SEXP rpms_survLm_fit(SEXP ySEXP, SEXP XSEXP, SEXP weightsSEXP) {
+RcppExport SEXP _rpms_survLm_fit(SEXP ySEXP, SEXP XSEXP, SEXP weightsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -20,42 +20,43 @@ BEGIN_RCPP
 END_RCPP
 }
 // survLm_model
-List survLm_model(arma::colvec y, arma::mat X, arma::colvec weights, arma::ivec strata, arma::ivec clusters);
-RcppExport SEXP rpms_survLm_model(SEXP ySEXP, SEXP XSEXP, SEXP weightsSEXP, SEXP strataSEXP, SEXP clustersSEXP) {
+List survLm_model(arma::colvec y, arma::mat X, arma::colvec weights, arma::uvec strata, arma::uvec clusters);
+RcppExport SEXP _rpms_survLm_model(SEXP ySEXP, SEXP XSEXP, SEXP weightsSEXP, SEXP strataSEXP, SEXP clustersSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< arma::colvec >::type y(ySEXP);
     Rcpp::traits::input_parameter< arma::mat >::type X(XSEXP);
     Rcpp::traits::input_parameter< arma::colvec >::type weights(weightsSEXP);
-    Rcpp::traits::input_parameter< arma::ivec >::type strata(strataSEXP);
-    Rcpp::traits::input_parameter< arma::ivec >::type clusters(clustersSEXP);
+    Rcpp::traits::input_parameter< arma::uvec >::type strata(strataSEXP);
+    Rcpp::traits::input_parameter< arma::uvec >::type clusters(clustersSEXP);
     rcpp_result_gen = Rcpp::wrap(survLm_model(y, X, weights, strata, clusters));
     return rcpp_result_gen;
 END_RCPP
 }
 // get_loss
-arma::vec get_loss(arma::vec x_val, arma::colvec y, arma::mat mX, arma::colvec weights, double M);
-RcppExport SEXP rpms_get_loss(SEXP x_valSEXP, SEXP ySEXP, SEXP mXSEXP, SEXP weightsSEXP, SEXP MSEXP) {
+arma::vec get_loss(arma::vec x_val, arma::vec uq_xs, arma::colvec y, arma::mat mX, arma::colvec weights, double M);
+RcppExport SEXP _rpms_get_loss(SEXP x_valSEXP, SEXP uq_xsSEXP, SEXP ySEXP, SEXP mXSEXP, SEXP weightsSEXP, SEXP MSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< arma::vec >::type x_val(x_valSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type uq_xs(uq_xsSEXP);
     Rcpp::traits::input_parameter< arma::colvec >::type y(ySEXP);
     Rcpp::traits::input_parameter< arma::mat >::type mX(mXSEXP);
     Rcpp::traits::input_parameter< arma::colvec >::type weights(weightsSEXP);
     Rcpp::traits::input_parameter< double >::type M(MSEXP);
-    rcpp_result_gen = Rcpp::wrap(get_loss(x_val, y, mX, weights, M));
+    rcpp_result_gen = Rcpp::wrap(get_loss(x_val, uq_xs, y, mX, weights, M));
     return rcpp_result_gen;
 END_RCPP
 }
 // get_loss_cat
-arma::vec get_loss_cat(arma::mat sets, arma::vec cats, arma::vec x_val, arma::colvec y, arma::mat mX, arma::colvec weights, double M);
-RcppExport SEXP rpms_get_loss_cat(SEXP setsSEXP, SEXP catsSEXP, SEXP x_valSEXP, SEXP ySEXP, SEXP mXSEXP, SEXP weightsSEXP, SEXP MSEXP) {
+arma::vec get_loss_cat(arma::imat sets, arma::vec cats, arma::vec x_val, arma::colvec y, arma::mat mX, arma::colvec weights, double M);
+RcppExport SEXP _rpms_get_loss_cat(SEXP setsSEXP, SEXP catsSEXP, SEXP x_valSEXP, SEXP ySEXP, SEXP mXSEXP, SEXP weightsSEXP, SEXP MSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::mat >::type sets(setsSEXP);
+    Rcpp::traits::input_parameter< arma::imat >::type sets(setsSEXP);
     Rcpp::traits::input_parameter< arma::vec >::type cats(catsSEXP);
     Rcpp::traits::input_parameter< arma::vec >::type x_val(x_valSEXP);
     Rcpp::traits::input_parameter< arma::colvec >::type y(ySEXP);
@@ -66,70 +67,71 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// clus_perm
-arma::mat clus_perm(arma::vec res, arma::vec weights, arma::uvec clus, arma::uword M);
-RcppExport SEXP rpms_clus_perm(SEXP resSEXP, SEXP weightsSEXP, SEXP clusSEXP, SEXP MSEXP) {
+// rbind_splits
+List rbind_splits(List split1, List split2);
+RcppExport SEXP _rpms_rbind_splits(SEXP split1SEXP, SEXP split2SEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec >::type res(resSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type weights(weightsSEXP);
-    Rcpp::traits::input_parameter< arma::uvec >::type clus(clusSEXP);
-    Rcpp::traits::input_parameter< arma::uword >::type M(MSEXP);
-    rcpp_result_gen = Rcpp::wrap(clus_perm(res, weights, clus, M));
+    Rcpp::traits::input_parameter< List >::type split1(split1SEXP);
+    Rcpp::traits::input_parameter< List >::type split2(split2SEXP);
+    rcpp_result_gen = Rcpp::wrap(rbind_splits(split1, split2));
     return rcpp_result_gen;
 END_RCPP
 }
-// perm
-arma::mat perm(arma::vec res, arma::vec weights, arma::uword M);
-RcppExport SEXP rpms_perm(SEXP resSEXP, SEXP weightsSEXP, SEXP MSEXP) {
+// get_node
+List get_node(arma::uword node, int cat, std::string vname, arma::colvec y, arma::vec mxval, arma::uvec s, List modfit);
+RcppExport SEXP _rpms_get_node(SEXP nodeSEXP, SEXP catSEXP, SEXP vnameSEXP, SEXP ySEXP, SEXP mxvalSEXP, SEXP sSEXP, SEXP modfitSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec >::type res(resSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type weights(weightsSEXP);
-    Rcpp::traits::input_parameter< arma::uword >::type M(MSEXP);
-    rcpp_result_gen = Rcpp::wrap(perm(res, weights, M));
-    return rcpp_result_gen;
-END_RCPP
-}
-// peak_cat
-double peak_cat(arma::vec score, arma::vec var);
-RcppExport SEXP rpms_peak_cat(SEXP scoreSEXP, SEXP varSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec >::type score(scoreSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type var(varSEXP);
-    rcpp_result_gen = Rcpp::wrap(peak_cat(score, var));
-    return rcpp_result_gen;
-END_RCPP
-}
-// var_test
-List var_test(arma::mat p_scores, arma::mat mX, arma::vec var, int cat);
-RcppExport SEXP rpms_var_test(SEXP p_scoresSEXP, SEXP mXSEXP, SEXP varSEXP, SEXP catSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::mat >::type p_scores(p_scoresSEXP);
-    Rcpp::traits::input_parameter< arma::mat >::type mX(mXSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type var(varSEXP);
+    Rcpp::traits::input_parameter< arma::uword >::type node(nodeSEXP);
     Rcpp::traits::input_parameter< int >::type cat(catSEXP);
-    rcpp_result_gen = Rcpp::wrap(var_test(p_scores, mX, var, cat));
+    Rcpp::traits::input_parameter< std::string >::type vname(vnameSEXP);
+    Rcpp::traits::input_parameter< arma::colvec >::type y(ySEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type mxval(mxvalSEXP);
+    Rcpp::traits::input_parameter< arma::uvec >::type s(sSEXP);
+    Rcpp::traits::input_parameter< List >::type modfit(modfitSEXP);
+    rcpp_result_gen = Rcpp::wrap(get_node(node, cat, vname, y, mxval, s, modfit));
     return rcpp_result_gen;
 END_RCPP
 }
-// get_pvec
-List get_pvec(arma::mat p_scores, arma::mat mX, arma::mat vars, arma::ivec cat_vec);
-RcppExport SEXP rpms_get_pvec(SEXP p_scoresSEXP, SEXP mXSEXP, SEXP varsSEXP, SEXP cat_vecSEXP) {
+// split_rpms
+List split_rpms(arma::uword node, arma::colvec y, arma::mat mX, arma::mat X, Rcpp::StringVector vnames, arma::uvec cat_vec, arma::colvec weights, arma::uvec strata, arma::uvec clusters, arma::uvec des_ind, arma::uword bin_size, arma::uword perm_reps, float pval);
+RcppExport SEXP _rpms_split_rpms(SEXP nodeSEXP, SEXP ySEXP, SEXP mXSEXP, SEXP XSEXP, SEXP vnamesSEXP, SEXP cat_vecSEXP, SEXP weightsSEXP, SEXP strataSEXP, SEXP clustersSEXP, SEXP des_indSEXP, SEXP bin_sizeSEXP, SEXP perm_repsSEXP, SEXP pvalSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::mat >::type p_scores(p_scoresSEXP);
+    Rcpp::traits::input_parameter< arma::uword >::type node(nodeSEXP);
+    Rcpp::traits::input_parameter< arma::colvec >::type y(ySEXP);
     Rcpp::traits::input_parameter< arma::mat >::type mX(mXSEXP);
-    Rcpp::traits::input_parameter< arma::mat >::type vars(varsSEXP);
-    Rcpp::traits::input_parameter< arma::ivec >::type cat_vec(cat_vecSEXP);
-    rcpp_result_gen = Rcpp::wrap(get_pvec(p_scores, mX, vars, cat_vec));
+    Rcpp::traits::input_parameter< arma::mat >::type X(XSEXP);
+    Rcpp::traits::input_parameter< Rcpp::StringVector >::type vnames(vnamesSEXP);
+    Rcpp::traits::input_parameter< arma::uvec >::type cat_vec(cat_vecSEXP);
+    Rcpp::traits::input_parameter< arma::colvec >::type weights(weightsSEXP);
+    Rcpp::traits::input_parameter< arma::uvec >::type strata(strataSEXP);
+    Rcpp::traits::input_parameter< arma::uvec >::type clusters(clustersSEXP);
+    Rcpp::traits::input_parameter< arma::uvec >::type des_ind(des_indSEXP);
+    Rcpp::traits::input_parameter< arma::uword >::type bin_size(bin_sizeSEXP);
+    Rcpp::traits::input_parameter< arma::uword >::type perm_reps(perm_repsSEXP);
+    Rcpp::traits::input_parameter< float >::type pval(pvalSEXP);
+    rcpp_result_gen = Rcpp::wrap(split_rpms(node, y, mX, X, vnames, cat_vec, weights, strata, clusters, des_ind, bin_size, perm_reps, pval));
     return rcpp_result_gen;
 END_RCPP
+}
+
+static const R_CallMethodDef CallEntries[] = {
+    {"_rpms_survLm_fit", (DL_FUNC) &_rpms_survLm_fit, 3},
+    {"_rpms_survLm_model", (DL_FUNC) &_rpms_survLm_model, 5},
+    {"_rpms_get_loss", (DL_FUNC) &_rpms_get_loss, 6},
+    {"_rpms_get_loss_cat", (DL_FUNC) &_rpms_get_loss_cat, 7},
+    {"_rpms_rbind_splits", (DL_FUNC) &_rpms_rbind_splits, 2},
+    {"_rpms_get_node", (DL_FUNC) &_rpms_get_node, 7},
+    {"_rpms_split_rpms", (DL_FUNC) &_rpms_split_rpms, 13},
+    {NULL, NULL, 0}
+};
+
+RcppExport void R_init_rpms(DllInfo *dll) {
+    R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
+    R_useDynamicSymbols(dll, FALSE);
 }
