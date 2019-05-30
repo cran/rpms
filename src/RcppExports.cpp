@@ -119,6 +119,33 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// clus_perm
+arma::mat clus_perm(arma::vec res, arma::uword C, std::vector <arma::uvec> clus_indx, arma::vec effs, arma::uword M);
+RcppExport SEXP _rpms_clus_perm(SEXP resSEXP, SEXP CSEXP, SEXP clus_indxSEXP, SEXP effsSEXP, SEXP MSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type res(resSEXP);
+    Rcpp::traits::input_parameter< arma::uword >::type C(CSEXP);
+    Rcpp::traits::input_parameter< std::vector <arma::uvec> >::type clus_indx(clus_indxSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type effs(effsSEXP);
+    Rcpp::traits::input_parameter< arma::uword >::type M(MSEXP);
+    rcpp_result_gen = Rcpp::wrap(clus_perm(res, C, clus_indx, effs, M));
+    return rcpp_result_gen;
+END_RCPP
+}
+// perm
+arma::mat perm(arma::vec res, arma::uword M);
+RcppExport SEXP _rpms_perm(SEXP resSEXP, SEXP MSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type res(resSEXP);
+    Rcpp::traits::input_parameter< arma::uword >::type M(MSEXP);
+    rcpp_result_gen = Rcpp::wrap(perm(res, M));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_rpms_survLm_fit", (DL_FUNC) &_rpms_survLm_fit, 3},
@@ -128,6 +155,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_rpms_rbind_splits", (DL_FUNC) &_rpms_rbind_splits, 2},
     {"_rpms_get_node", (DL_FUNC) &_rpms_get_node, 7},
     {"_rpms_split_rpms", (DL_FUNC) &_rpms_split_rpms, 13},
+    {"_rpms_clus_perm", (DL_FUNC) &_rpms_clus_perm, 5},
+    {"_rpms_perm", (DL_FUNC) &_rpms_perm, 2},
     {NULL, NULL, 0}
 };
 

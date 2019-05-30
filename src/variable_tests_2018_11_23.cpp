@@ -12,39 +12,43 @@ List survLm_fit(arma::colvec y, arma::mat X, arma::colvec weights); //declaratio
 //               Rcpp::StringVector vnames, arma::uword perm_reps, float pval);
 
 
-
-
-List get_clus_effect(arma::vec rij, arma::uvec clus){
-  
-  // double mu= dot(resid, weights)/sum(weights); //est of pop mean
-  
-  // resid -= mu;  //center resid so has mean 0  should be zero
+List get_clus_ids(arma::uvec clus){
   
   arma::uvec clus_id= unique(clus); //ids of clusters
   uword C=clus_id.n_elem; //C is number of clusters
-  
+  //if(C<1) cout<<"############ C is "<<C<<endl;
   vector<uvec> cind(C);
-  
-  arma::ivec clus_size(C); //vector to hold cluster sizes
-  arma::vec clus_eff(C); // vector to hold cluster effects
   
   //find cluster effect for each cluster 
   for(uword c=0; c<C; ++c){
     //find elements in cluster c 
     uvec ci = find(clus==clus_id(c));
+    //if(ci.n_elem<1)cout<<"########### ci has "<<ci.n_elem<< " elements"<<endl;
     cind.at(c) = ci;
-    clus_eff(c)= mean(rij(ci));
+    //  clus_size(c)=ci.n_elem;  //uncomment if cluster sizes wanted later
+  }
+  
+  return List::create(
+    Named("C")=C,
+    Named("clusindx") = cind
+  );
+  
+}//end get_clus_ids
+
+arma::vec get_clus_effect(arma::vec rij, uword C, vector<uvec> cind){
+  
+//  arma::ivec clus_size(C); //vector to hold cluster sizes
+  arma::vec clus_eff(C); // vector to hold cluster effects
+ // if(C < 1) cout<<"C is "<<C<<endl;
+  //find cluster effect for each cluster 
+  for(uword c=0; c<C; ++c){
+    clus_eff(c)= mean(rij(cind.at(c)));
     //  clus_size(c)=ci.n_elem;  //uncomment if cluster sizes wanted later
   }
   // cout<<"----------- The cind vector of vectors ----------" <<endl<<endl;
   // cout<<cind.at(0) <<endl << cind.at(1) <<endl << cind.at(2) <<endl;
   
-  return List::create(
-    Named("clusters") = clus_id,
-    Named("clusindx") = cind,
-    Named("effects") = clus_eff//, don't need comma for last element (not using sizes)
-    //Named("sizes") = clus_size
-  );
+  return clus_eff;
 }
 
 //#################### clus_perm ######################################
@@ -55,13 +59,12 @@ List get_clus_effect(arma::vec rij, arma::uvec clus){
 // effs: C-vec of estimated cluster effects;  clus: n-vec of cluster lables
 // M: integer of number of permuted values to return
 // 
+//
 //============================================================================
-
-
-arma::mat clus_perm(arma::vec res, arma::uvec clus_ids, vector <arma::uvec> clus_indx, arma::vec effs, uword M) {
+// [[Rcpp::export]] 
+arma::mat clus_perm(arma::vec res, arma::uword C, std::vector <arma::uvec> clus_indx, arma::vec effs, arma::uword M) {
   
   int  n = res.n_elem;
-  uword C = clus_ids.n_elem;
   arma::mat r_vals(n, M); //matrix to hold M reordered weighted residuals
   
   for(uword m=0; m<M; ++m){
@@ -73,6 +76,8 @@ arma::mat clus_perm(arma::vec res, arma::uvec clus_ids, vector <arma::uvec> clus
       
       // uvec j=find(clus==clus_ids(i)); //index of each observation in cluster i
       uvec j = clus_indx.at(i);
+      
+  //    if(j.n_elem<1) cout<<"j is "<<j<<endl;
       nr(j) -= effs(i); //subtract average old effect
       nr(j) += reffs(i); //add average reshuffled effect
       
@@ -95,8 +100,8 @@ arma::mat clus_perm(arma::vec res, arma::uvec clus_ids, vector <arma::uvec> clus
 //********************************* unclustered perm ***************************
 // if design does not have clusters use faster unclustered permuation
 // ****************************************************************************
-
-
+//
+// [[Rcpp::export]] 
 arma::mat perm(arma::vec res, arma::uword M) {
   
   int  n = res.n_elem;
@@ -159,8 +164,9 @@ double peak_cat(arma::colvec score, arma::vec var){
   }
   
   uvec pos = find(cat_sums >= 0);
+ // if(pos.n_elem<1) cout<<"pos is "<< pos << endl;
   uvec neg = find(cat_sums < 0);
-  
+//  if(neg.n_elem<1) cout<<"neg is "<<neg << endl;
   double peak, a, b;
   
   a=fabs((float)sum(cat_sums(neg)));
@@ -189,18 +195,19 @@ List get_pvec(arma::colvec scores, arma::mat mX, arma::mat vars, arma::uvec cat_
   arma::uword pX = mX.n_cols, pV = vars.n_cols, n=scores.n_elem, M=100;
 
   arma::uword alpha=(uword)ceil(pval*perm_reps); //find number of failures until dismiss
-
   perm_reps=(uword)ceil(perm_reps/100); //find number of reps of 100 to do
-  
+
   arma::mat pvals(pV, pX), peaks(pV, pX); // matrices that store p-vals and peaks for each test
   pvals.fill(0);
   peaks.fill(0);
 
   arma::vec pvec(pV), maxpeak(pV); //these are two vectors that are returned
   
+  List  clus_id = get_clus_ids(clusters);
+  
   for(arma::uword j=0; j<pX; ++j){  //do for each variable in the model matrix
     
-    List clus_eff;
+    arma::vec clus_eff;
     
     arma::colvec chi = scores;
     chi %= mX.col(j);         //multiply res'*X_j
@@ -209,7 +216,8 @@ List get_pvec(arma::colvec scores, arma::mat mX, arma::mat vars, arma::uvec cat_
     double a;  //original peak
     
     if(des_ind[2] == 1){  // if clustered (vectors begin at 0)
-      clus_eff = get_clus_effect(chi, clusters); // get clus effects
+   
+      clus_eff = get_clus_effect(chi, clus_id["C"], clus_id["clusindx"]); // get clus effects
     } // end if clusterd
     
 //############### Permutation Loop over perm_reps X 100 #############
@@ -224,7 +232,7 @@ List get_pvec(arma::colvec scores, arma::mat mX, arma::mat vars, arma::uvec cat_
       arma::mat pres(n, M); // to store M permuted values of the original residuals
       
       if(des_ind[2] == 1){ // if clustered (vectors begin at 0)
-        pres = clus_perm(chi,  clus_eff["clusters"], clus_eff["clusindx"], clus_eff["effects"], M);
+        pres = clus_perm(chi,  clus_id["C"], clus_id["clusindx"], clus_eff, M);
       }
       else{  // if not clustered 
         pres = perm(chi, M);
@@ -278,6 +286,7 @@ List get_pvec(arma::colvec scores, arma::mat mX, arma::mat vars, arma::uvec cat_
   for(arma::uword i=0; i<pV; ++i){
     double minpval = min(pvals.row(i));
     arma::uvec s = find(pvals.row(i)==minpval);
+   // if(s.n_elem<1)cout<<"########### ci has "<<s.n_elem<< " elements"<<endl;
     arma::rowvec potpeaks = peaks.row(i); // peaks for ith variable
     double mpeak = max(potpeaks(s)); // maximum of all potential peaks
     pvec(i) = minpval;

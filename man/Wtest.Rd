@@ -6,8 +6,8 @@
 \alias{test}
 \title{Wtest (Wald Test for sample weights)}
 \usage{
-Wtest(t1, data, weights = rep(1, nrow(data)), strata = rep(1L, nrow(data)),
-  clusters = (1L:nrow(data)))
+Wtest(t1, data, weights = rep(1, nrow(data)), strata = rep(1L,
+  nrow(data)), clusters = (1L:nrow(data)))
 }
 \arguments{
 \item{t1}{rpms object}

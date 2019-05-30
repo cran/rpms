@@ -71,9 +71,9 @@ arma::mat survLM_covM(arma::colvec resid, arma::mat X,
     arma::mat G(p, p, fill::zeros);
     
     arma::uvec h_labs=unique(strata);
-    //cout<<"h_labs is "<< endl << h_labs << endl;
+  
     uword H = h_labs.n_elem;
-    
+  
     for(uword h=0; h<H; ++h){
       arma::mat G_h(p, p, fill::zeros);
       uvec uh = find(strata==h_labs[h]);
@@ -83,10 +83,10 @@ arma::mat survLM_covM(arma::colvec resid, arma::mat X,
       
       arma::uvec ids = unique(clusters.elem(find(strata==h_labs[h])));
       uword nh = ids.n_elem;
-      
+
       for(uword i=0; i<nh; ++i ){
         uvec s=find(clusters.elem(uh) == ids[i]);  //in strata h and cluster i 
-        
+   // cout<< "uvec has " << s.n_elem << " elements"<< endl;
         arma::rowvec dhi = sum(D.rows(s));
         
         G_h += (trans(dhi)*dhi);
@@ -98,6 +98,8 @@ arma::mat survLM_covM(arma::colvec resid, arma::mat X,
       
     }
     
+    if(n <= p) {G=datum::inf;}  // single psu
+    else G=((n-1)/(n-p))*G; // 
     G=((n-1)/(n-p))*G;
     
     arma::mat covM = iA*G*iA;

@@ -4,8 +4,8 @@
 #' This package provides a function \code{rpms} to produce an \code{rpms} object 
 #' and method functions that operate on them. 
 #' The \code{rpms} object is a representation of a regression tree achieved
-#' by recursively partioning the dataset, fitting the specified linear model
-#' on each node seperately.
+#' by recursively partitioning the dataset, fitting the specified linear model
+#' on each node separately.
 #' The recursive partitioning algorithm has an unbiased variable selection
 #' and accounts for the sample design.
 #' The algorithm accounts for one-stage of stratification and clustering as

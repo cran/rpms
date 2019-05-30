@@ -1,4 +1,5 @@
 ### R code from vignette source 'rpms_2018_01_22.Rnw'
+### Encoding: UTF-8
 
 ###################################################
 ### code chunk number 1: R_options

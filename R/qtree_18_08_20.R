@@ -1,18 +1,19 @@
 
 
-get.qtree<-function(f1, n.num=1, title="name", digits=2){
+get.qtree<-function(f1, n.num, title=NA, digits, s_size=TRUE){
   # takes a frame f1, split number n.num, root name, and rounding digits
   i <-which(f1$node==n.num)
-  
   if(n.num==1) #first split
     if(f1$end[i]=="E"){
       val=round(f1$mean[i], digits=digits)
-      return(cat("\\", "Tree [.{", title, "} ", "\\", "\\ ", "\\", 
-                 "fbox{", val, "} ]", sep="")) 
+      return(cat("\\", "Tree [.{", title, "} ", "\\", "\\ ", 
+                 ifelse(s_size, paste0("\\", "fbox{n = ", f1$n[i], "} ", "\\", "\\ "),""),
+                 "\\", "fbox{", paste(round(val, digits)), "} ]", sep="")) 
     }
     else #first split not end
       return(cat("\\", "Tree [.{", title, "} ", 
-                 get.qtree(f1, 2), get.qtree(f1, 3), "]", sep="")) 
+                 get.qtree(f1, n.num=2, digits=digits, s_size=s_size), 
+                 get.qtree(f1, n.num=3, digits=digits, s_size=s_size), "]", sep="")) 
   
   
   if((n.num %% 2)==0) # left hand split (LHS)
@@ -22,24 +23,26 @@ get.qtree<-function(f1, n.num=1, title="name", digits=2){
         return(paste("[.{$", f1$var[i], " \\", "leq ", 
                      round(unlist(f1$xval[i]),digits), " $} ",
                      "{", "\\", "fbox{node ", n.num, "} ", "\\", "\\ ",
-                     "\\", "fbox{value ", val, "}} ]", sep="")) 
+                     ifelse(s_size, paste0("\\", "fbox{n = ", f1$n[i], "} ", "\\", "\\ "),""),
+                     "\\", "fbox{value ", paste(round(val, digits)), "}} ]", sep="")) 
       else  #categorical split
         return(paste("[.{$", f1$var[i], " \\", "in ", "\\", "{", 
                      paste(unlist(f1$xval[i]),collapse=","), "\\", "}$} ",
                      "{", "\\", "fbox{node ", n.num, "}", " \\", "\\ ",
-                     "\\", "fbox{value ", val, "}} ]", sep="")) 
+                     ifelse(s_size, paste0("\\", "fbox{n = ", f1$n[i], "} ", "\\", "\\ "),""),
+                     "\\", "fbox{value ", paste(round(val, digits)), "}} ]", sep="")) 
     }  
     else #LHS not end node
       if(f1$cat[i]==0)
         return(paste("[.{$", f1$var[i], " \\", "leq ", 
                      round(unlist(f1$xval[i]),digits), " $} ",
-                     get.qtree(f1, 2*n.num), 
-                     get.qtree(f1, 2*n.num+1), "]", sep="")) 
+                     get.qtree(f1, n.num=2*n.num, digits=digits, s_size=s_size), 
+                     get.qtree(f1, n.num=2*n.num+1, digits=digits, s_size=s_size), "]", sep="")) 
       else  #categorical
         return(paste("[.{$", f1$var[i], " \\", "in ", "\\", "{", 
                      paste(unlist(f1$xval[i]),collapse=","), "\\", "}$} ",
-                     get.qtree(f1, 2*n.num), 
-                     get.qtree(f1, 2*n.num+1), "]", sep="")) 
+                     get.qtree(f1, n.num=2*n.num, digits=digits, s_size=s_size), 
+                     get.qtree(f1, n.num=2*n.num+1, digits=digits, s_size=s_size), "]", sep="")) 
   
   else #right hand split (RHS)
     if(f1$end[i]=="E"){ #end
@@ -47,22 +50,26 @@ get.qtree<-function(f1, n.num=1, title="name", digits=2){
       if(f1$cat[i]==0) #numeric split
         return(paste("[.{$", f1$var[i], " > ", 
                      round(unlist(f1$xval[i]),digits), " $} ",
-                     "{", "\\", "fbox{node ", n.num, "}", " \\", "\\ ",
-                     "\\", "fbox{value ", val, "}} ]", sep="")) 
+                     "{", "\\", "fbox{node ", n.num, "} ", "\\", "\\ ",
+                     ifelse(s_size, paste0("\\", "fbox{n = ", f1$n[i], "} ", "\\", "\\ "),""),
+                     "\\", "fbox{value ", paste(round(val, digits)), "}} ]", sep="")) 
       else  #categorical split
         return(paste("[.{$", f1$var[i], " \\", "in ", "\\", "{", 
                      paste(unlist(f1$xval[i]),collapse=","), "\\", "}$} ",
                      "{", "\\", "fbox{node ", n.num, "}", " \\", "\\ ",
-                     "\\", "fbox{value ", val, "}} ]", sep=""))
+                     ifelse(s_size, paste0("\\", "fbox{n = ", f1$n[i], "} ", "\\", "\\ "),""),
+                     "\\", "fbox{value ", paste(round(val, digits)), "}} ]", sep=""))
     }
     else #RHS not end node
       if(f1$cat[i]==0)
         return(paste("[.{$", f1$var[i], " > ", round(unlist(f1$xval[i]),digits), " $} ",
-                     get.qtree(f1, 2*n.num), get.qtree(f1, 2*n.num+1), "]", sep=""))  
+                     get.qtree(f1, n.num=2*n.num, digits=digits, s_size=s_size), 
+                     get.qtree(f1, n.num=2*n.num+1, digits=digits, s_size=s_size), "]", sep=""))  
       else #RHS is categorical
         return(paste("[.{$", f1$var[i], " \\", "in ", "\\", "{", 
                      paste(unlist(f1$xval[i]), collapse=","), "\\","}$} ",
-                     get.qtree(f1, 2*n.num), get.qtree(f1, 2*n.num+1), "]", sep="")) 
+                     get.qtree(f1, n.num=2*n.num, digits=digits, s_size), 
+                     get.qtree(f1, n.num=2*n.num+1, digits=digits, s_size), "]", sep="")) 
   
   return("Error in qtree")
   
@@ -85,6 +92,7 @@ get.qtree<-function(f1, n.num=1, title="name", digits=2){
 #' @param label string used for labeling the tree figure
 #' @param caption string used for caption
 #' @param digits integer number of displayed digits
+#' @param s_size boolean indicating whether or not to include sample size
 #' @param scale numeric factor for scaling size of tree
 #' @param lscape boolean to display tree in landscape mode
 #' @examples
@@ -103,8 +111,7 @@ get.qtree<-function(f1, n.num=1, title="name", digits=2){
 #' @export
 #' @aliases rpms::qtree
 
-qtree<-function(t1, title="rpms", label=NA, caption="", digits=2, scale=1, lscape=FALSE){
-
+qtree<-function(t1, title="rpms", label=NA, caption="", digits=2, s_size=TRUE, scale=1, lscape=FALSE){
   if(lscape) cat("\\", "begin{landscape} \n", sep="")
 
   cat("\\", "begin{figure}[htb] \n", sep="")
@@ -112,7 +119,7 @@ qtree<-function(t1, title="rpms", label=NA, caption="", digits=2, scale=1, lscap
     
    cat("\\", "begin{tikzpicture}[scale=", scale, ", ] \n", sep="")
    cat("\\", "tikzset{every tree node/.style={align=center,anchor=north}} \n", sep="")
-     get.qtree(t1$frame, n.num=1, title=title, digits=digits)
+     get.qtree(t1$frame, n.num=1, title=title, digits=digits, s_size=s_size)
      
    cat("\\", "end{tikzpicture} \n", sep="")
     

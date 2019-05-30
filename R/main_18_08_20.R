@@ -272,16 +272,16 @@ make_nice<-function(frame){
 #' @aliases rpms
 #' 
 rpms<-function(rp_equ, data, weights=~1, strata=~1, clusters=~1, 
-                  e_equ=~1, e_fn="survLm", l_fn=NULL, 
+                  e_equ=~1, e_fn="survLm", l_fn=NULL,
                   bin_size=NULL, perm_reps=1000L, pval=.05){
   
 
 
   # Unnecessary l_fn is ignored ##########
-  if(is.null(l_fn)) l_fn <- function(x){sum(x^2)}
-  else if(!(class(l_fn)=="function")) stop("l_fn is not of type function")
+  # if(is.null(l_fn)) l_fn <- function(x){sum(x^2)}
+  # else if(!(class(l_fn)=="function")) stop("l_fn is not of type function")
   
-  if(is.null(bin_size)) bin_size <- ceiling(nrow(data)^(1/2))
+  if(is.null(bin_size)) bin_size <- ceiling(nrow(data)^(11/20))
   else 
     if(bin_size<2) {
       warning("bin_size set to 2")  
@@ -447,7 +447,7 @@ rpms<-function(rp_equ, data, weights=~1, strata=~1, clusters=~1,
   #          calls C++ funtions get_node and split_rpms 
   ################################################################################################################
   frame <-
-    rbind_splits(get_node(node=1, cat=as.integer(NA), vname="Root", y=as.matrix(y), mxval=as.matrix(NA), s=as.matrix(NA), 
+    rbind_splits(get_node(node=1, cat=as.integer(NA), vname="Root", y=as.matrix(y), mxval=as.matrix(NA), s=as.matrix(0), 
                           modfit=survLm_model(y=as.matrix(y), X=mX, weights=weights, strata=strata, clusters=clusters)), 
                  split_rpms(node=1, y, mX, X, vX, cat_vec, weights=weights, strata=strata, clusters=clusters, des_ind, 
                             bin_size=bin_size, perm_reps=perm_reps, pval=pval))

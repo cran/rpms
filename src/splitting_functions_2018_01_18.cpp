@@ -41,13 +41,17 @@ arma::vec get_loss(arma::vec x_val,  arma::vec uq_xs, arma::colvec y, arma::mat 
   for(uword i=0; i<k; ++i){
     uvec s=find(x_val<= uq_xs[i]);
     uvec not_s=find(x_val> uq_xs[i]);
+   // if(s.n_elem<1)cout<<"########### s has "<<s.n_elem<< " elements"<<endl;
+  //  if(not_s.n_elem<1)cout<<"########### not_s has "<<not_s.n_elem<< " elements"<<endl;
     double sn=s.n_elem;
     
     if(sn>=M && (n-sn)>=M){
       
       arma::colvec res_s = survLm_fit(y.elem(s), mX.rows(s), weights.elem(s))["residuals"];
       arma::colvec res_ns = survLm_fit(y.elem(not_s), mX.rows(not_s), weights.elem(not_s))["residuals"];
-      l_vec[i]=(sn/n)*dot(res_s,res_s) + ((n-sn)/n)*dot(res_ns,res_ns);
+      //l_vec[i]=(sn/n)*dot(res_s,res_s) + ((n-sn)/n)*dot(res_ns,res_ns);
+      // l_vec[i]=dot(res_s,res_s) + dot(res_ns,res_ns);
+       l_vec[i]=dot(weights.elem(s)%res_s, res_s) + dot(weights.elem(not_s)%res_ns,res_ns); 
     } //end if
     
     
@@ -80,13 +84,17 @@ arma::vec get_loss_cat(arma::imat sets, arma::vec cats, arma::vec x_val, arma::c
     
     uvec s= find(sx);
     uvec not_s= find(ones(n)-sx);  //not_s is complement of s
-    
+   // if(s.n_elem<1)cout<<"########### s has "<<s.n_elem<< " elements"<<endl;
+  //  if(not_s.n_elem<1)cout<<"########### not_s has "<<not_s.n_elem<< " elements"<<endl;
+  
     double sn=s.n_elem;
     
     if(sn>=M && (n-sn)>=M){
       arma::colvec res_s = survLm_fit(y.elem(s), mX.rows(s), weights.elem(s))["residuals"];
       arma::colvec res_ns = survLm_fit(y.elem(not_s), mX.rows(not_s), weights.elem(not_s))["residuals"];
-      l_vec[j]=(sn/n)*dot(res_s,res_s) + ((n-sn)/n)*dot(res_ns,res_ns);
+      //l_vec[j]=(sn/n)*dot(res_s,res_s) + ((n-sn)/n)*dot(res_ns,res_ns);
+      // l_vec[j]=dot(res_s,res_s) +  dot(res_ns,res_ns);
+      l_vec[j]=dot(weights.elem(s)%res_s, res_s) + dot(weights.elem(not_s)%res_ns,res_ns);
     } //end if
     
     
@@ -234,12 +242,13 @@ List rbind_splits(List split1, List split2) {
 List get_node(arma::uword node, int cat, std::string vname, arma::colvec y, arma::vec mxval, arma::uvec s, List modfit){
   
   arma::uword n_y=y.n_elem;  //y is all observations in parent node
+ // cout<<"************ Is this it? **********"<< s <<endl;
   
   if(node==1) { s=find(y<datum::inf); }
-  
+
   arma::colvec resid=modfit["residuals"];
-  double loss = ((double)(s.n_elem)/(double)(n_y))*sum(resid.t()*resid); //weighted squared residuals
-  
+//double loss = ((double)(s.n_elem)/(double)(n_y))*sum(resid.t()*resid); //weighted squared residuals
+  double loss = sum(resid.t()*resid); // squared residuals
   vector <rowvec> xval(1);
   xval.at(0)=mxval.t();
   //cout<<"Got xval"<<endl;
@@ -278,8 +287,9 @@ List get_node(arma::uword node, int cat, std::string vname, arma::colvec y, arma
 //# main split function () uses mean squared error)
 //######################################################################################################################################
 // [[Rcpp::export]]
-List split_rpms(arma::uword node, arma::colvec y, arma::mat mX, arma::mat X, Rcpp::StringVector vnames, arma::uvec cat_vec, arma::colvec weights, 
-                arma::uvec strata, arma::uvec clusters, arma::uvec des_ind,  arma::uword bin_size, arma::uword perm_reps, float pval){
+List split_rpms(arma::uword node, arma::colvec y, arma::mat mX, arma::mat X, Rcpp::StringVector vnames, arma::uvec cat_vec, 
+                arma::colvec weights, arma::uvec strata, arma::uvec clusters, arma::uvec des_ind,  
+                arma::uword bin_size, arma::uword perm_reps, float pval){
   
   arma::uword n = y.n_elem;
   
@@ -292,6 +302,8 @@ List split_rpms(arma::uword node, arma::colvec y, arma::mat mX, arma::mat X, Rcp
   arma::vec uvar= unique(X.col(x)); // sorted unique x values
   
   arma::uword cat=cat_vec.at(x);
+ // if(cat_vec.n_elem<1)cout<<"########### cat_vec has "<<cat_vec.n_elem<< " elements"<<endl;
+
   std::string var=as<string>(vnames.at(x));
   
   //#------------------------ numeric variable  -------------------------------
@@ -305,12 +317,15 @@ List split_rpms(arma::uword node, arma::colvec y, arma::mat mX, arma::mat X, Rcp
     if(loss == datum::inf){ return(null_split()); }  //end if no split
     else{
       arma::uword  min_idx = min(find(l_vec==loss));
+
       rowvec mxval(1); //value of x rep as vector of size one
-      mxval.fill(uvar.at(min_idx)); 
+    // mxval.fill(uvar.at(min_idx));
       
       // can't do this here, might have to pass an integer indicator vector from R
-      //if(is.integer(X.col(x))==TRUE) int mxval = (int)(x_val[min_i]);
-      //else mxval <- round((x.val[min.i] + x.val[min.i + 1])/2, 2)
+           // yes we can
+           
+      if(all(floor(X.col(x))==ceil(X.col(x)))) mxval.fill(uvar.at(min_idx));
+      else  mxval.fill((uvar.at(min_idx) + uvar.at(min_idx+1))/2);
       
       //------- the Left node ---------------------------
       arma::uvec sL = find(X.col(x)<=mxval.at(0));
@@ -325,7 +340,7 @@ List split_rpms(arma::uword node, arma::colvec y, arma::mat mX, arma::mat X, Rcp
       
       //------- the Right node -----------------------------------------------------------------------------
       uvec sR = find(X.col(x)>mxval.at(0));
-      
+    
       modfit = survLm_model(y.elem(sR), mX.rows(sR), weights.elem(sR), strata.elem(sR), clusters.elem(sR));
       
       List SpR=get_node(2*node+1, cat=0, var, y, mxval, sR, modfit);
@@ -416,12 +431,14 @@ List split_rpms(arma::uword node, arma::colvec y, arma::mat mX, arma::mat X, Rcp
       //------- the Right node -----------------------------------------------------------------------------
       
       uvec right_cats = find(power_set.row(min_idx)==0);
+    //  if(right_cats.n_elem<1)cout<<"########### right_cats is "<<right_cats<< " "<<endl; 
       uword ncats_R = right_cats.n_elem;
       
       vec mxval_R = uvar(right_cats);
       
       //get index vector of all data with category right side
       uvec sR = cat_ind.at(right_cats(0));
+
       for(uword i=1; i<ncats_R; ++i) sR= join_vert(sR, cat_ind.at(right_cats(i)));
       
       modfit = survLm_model(y.elem(sR), mX.rows(sR), weights.elem(sR), strata.elem(sR), clusters.elem(sR));

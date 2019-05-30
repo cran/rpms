@@ -198,7 +198,7 @@ node_plot<-function(t1, node, data, variable=NA, ...){
 #' @export
 predict.rpms<-function(object, newdata, ...){
   
- # pars<-list(...)  #currently does not take other parameters
+  # pars<-list(...)  #currently does not take other parameters
   
   t1<-object
   

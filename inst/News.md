@@ -1,3 +1,13 @@
+-------- Version 0_4_0 -----------------
+
+Provides function rpms_forest() which fits a random forest model to survey data
+
+Uses loss that is not weighted by proportion of sample
+  - leads to more interpretable splits
+  
+Improved version of qtree() function  
+  - allows option to show sample size n
+
 -------- Version 0_3_0 --------------
 
   The whole recusive partitioning algorithm is now done in C++

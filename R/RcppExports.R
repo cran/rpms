@@ -41,3 +41,11 @@ split_rpms <- function(node, y, mX, X, vnames, cat_vec, weights, strata, cluster
     .Call('_rpms_split_rpms', PACKAGE = 'rpms', node, y, mX, X, vnames, cat_vec, weights, strata, clusters, des_ind, bin_size, perm_reps, pval)
 }
 
+clus_perm <- function(res, C, clus_indx, effs, M) {
+    .Call('_rpms_clus_perm', PACKAGE = 'rpms', res, C, clus_indx, effs, M)
+}
+
+perm <- function(res, M) {
+    .Call('_rpms_perm', PACKAGE = 'rpms', res, M)
+}
+
