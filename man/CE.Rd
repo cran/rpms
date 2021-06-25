@@ -4,9 +4,11 @@
 \name{CE}
 \alias{CE}
 \title{CE Consumer expenditure data 2015}
-\format{A data frame with 68,415 observations on 47 variables:}
+\format{
+A data frame with 68,415 observations on 47 variables:
+}
 \source{
-\url{http://www.bls.gov/cex/pumd_data.htm}
+\url{https://www.bls.gov/cex/pumd_data.htm}
 }
 \usage{
 CE
@@ -88,7 +90,7 @@ public use interview data file.
                4 Separated; 5 Never Married}
 \item{MEMBRACE}{Race code: 1 White; 2 Black; 3 Native American; 4 Asian; 
             5 Pacific Islander; 6 Multi-race}
-\item{HORIGION}{Hispanic, Latino, or Spanish ?  Y (Yes); N (No)}
+\item{HORIGIN}{Hispanic, Latino, or Spanish origin?  Y (Yes); N (No)}
 \item{ARM_FORC}{Member of armed forces?  Y (Yes);  N (No)}
 \item{IN_COLL}{Currently enrolled in college?  Full (full time); Part (part time); No}
 }
@@ -143,7 +145,7 @@ public use interview data file.
 
 \describe{
 \item{IRAX}{Total value of all retirement accounts}
-\item{LIQUDX}{Value of liquid assets}
+\item{LIQUIDX}{Value of liquid assets}
 \item{STOCKX}{Total value of all directly-held stocks, bonds}
 \item{STUDNTX}{Amount owed on all student loans}
 }
@@ -153,7 +155,7 @@ public use interview data file.
   
 \describe{          
 \item{TOTEXPCQ}{Total expenditures for current quarter}   
-\item{TOTTXEST}{Total taxes paid (estimated)}
+\item{TOTXEST}{Total taxes paid (estimated)}
 \item{EHOUSNGC}{Total expenditures for housing paid this quarter}              
 \item{HEALTHCQ}{Expenditures on health care quarter}
 \item{FOODCQ}{Expenditure on food this quarter}
@@ -162,8 +164,4 @@ public use interview data file.
 } end describe
 }
 
-\seealso{
-For more information see 
-\url{http://www.bls.gov/cex/2015/csxintvw.pdf}
-}
 \keyword{datasets}

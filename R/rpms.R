@@ -10,14 +10,24 @@
 #' and accounts for the sample design.
 #' The algorithm accounts for one-stage of stratification and clustering as
 #' well as unequal probability of selection.
-#' This version does not handle missing values, so only complete cases of a 
-#' dataset are used.
+#' There are also functions for producing random forest estimator 
+#' (a list of \code{rpms} objects), a boosted regression tree and tree 
+#' based zero-inflated model.
 #' 
 #' @docType package
 #' @name rpms-package
 #' 
 #' @useDynLib rpms
 #' @importFrom Rcpp sourceCpp
+#' @importFrom stats terms
+#' @importFrom stats na.omit
+#' @importFrom stats as.formula
+#' @importFrom stats formula
+#' @importFrom stats var
+#' @importFrom stats model.matrix
+#' @importFrom stats cov
+#' @importFrom stats predict
+#' 
 NULL
 
 #############################################################################
@@ -92,7 +102,7 @@ NULL
 #'                4 Separated; 5 Never Married}
 #' \item{MEMBRACE}{Race code: 1 White; 2 Black; 3 Native American; 4 Asian; 
 #'             5 Pacific Islander; 6 Multi-race}
-#' \item{HORIGION}{Hispanic, Latino, or Spanish ?  Y (Yes); N (No)}
+#' \item{HORIGIN}{Hispanic, Latino, or Spanish origin?  Y (Yes); N (No)}
 #' \item{ARM_FORC}{Member of armed forces?  Y (Yes);  N (No)}
 #' \item{IN_COLL}{Currently enrolled in college?  Full (full time); Part (part time); No}
 #' }
@@ -141,7 +151,7 @@ NULL
 #' @section Assetts and Liabilities:
 #' \describe{
 #' \item{IRAX}{Total value of all retirement accounts}
-#' \item{LIQUDX}{Value of liquid assets}
+#' \item{LIQUIDX}{Value of liquid assets}
 #' \item{STOCKX}{Total value of all directly-held stocks, bonds}
 #' \item{STUDNTX}{Amount owed on all student loans}
 #' }
@@ -149,7 +159,7 @@ NULL
 #' @section Expenditures:  
 #' \describe{          
 #' \item{TOTEXPCQ}{Total expenditures for current quarter}   
-#' \item{TOTTXEST}{Total taxes paid (estimated)}
+#' \item{TOTXEST}{Total taxes paid (estimated)}
 #' \item{EHOUSNGC}{Total expenditures for housing paid this quarter}              
 #' \item{HEALTHCQ}{Expenditures on health care quarter}
 #' \item{FOODCQ}{Expenditure on food this quarter}
@@ -157,8 +167,5 @@ NULL
 #' \item{FOOTWRCQ}{Expenditure on footware1 this quarter}
 #' } end describe
 #' 
-#' @source \url{http://www.bls.gov/cex/pumd_data.htm}
-#' 
-#' @seealso For more information see 
-#' \url{http://www.bls.gov/cex/2015/csxintvw.pdf}
+#' @source \url{https://www.bls.gov/cex/pumd_data.htm}
 "CE"

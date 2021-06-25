@@ -195,7 +195,7 @@ List get_pvec(arma::colvec scores, arma::mat mX, arma::mat vars, arma::uvec cat_
   arma::uword pX = mX.n_cols, pV = vars.n_cols, n=scores.n_elem, M=100;
 
   arma::uword alpha=(uword)ceil(pval*perm_reps); //find number of failures until dismiss
-  perm_reps=(uword)ceil(perm_reps/100); //find number of reps of 100 to do
+  perm_reps=(uword)ceil(perm_reps/M); //find number of reps of M to do
 
   arma::mat pvals(pV, pX), peaks(pV, pX); // matrices that store p-vals and peaks for each test
   pvals.fill(0);
@@ -310,15 +310,7 @@ List get_pvec(arma::colvec scores, arma::mat mX, arma::mat vars, arma::uvec cat_
 int select_var(arma::colvec y, arma::mat mX, arma::mat vars, arma::uvec cat_vec, arma::colvec weights, arma::uvec clusters, arma::uvec des_ind,
                Rcpp::StringVector vnames, arma::uword perm_reps, float pval){
   
-  //----------- If no perm reps  -----------------
-  if(perm_reps < 1) return(-1); // not split 
-  
-
-  //----- get residuals ---- 
-  arma::colvec res = survLm_fit(y, mX, weights)["residuals"];
-  res%=weights; //considering weighted residuals rij
-  
-  
+  //cout<<"in select var "<<endl;
   //--- check for variables with only 1 unique value ----------
   uword pV=vars.n_cols;
   uvec uvar_count(pV);
@@ -327,25 +319,32 @@ int select_var(arma::colvec y, arma::mat mX, arma::mat vars, arma::uvec cat_vec,
     uvar_count(i)=unique_vals.n_elem;
   }
   
-  uvec Vindx=find(uvar_count>1);
+  uvec Vindx=find(uvar_count>1);  //Vindx is an index of variables with more than one value
   if(Vindx.n_elem==0){ return(-1); }
-  vars = vars.cols(Vindx);  //only consider variables with at least two unique values
+ //don't like this sloppy reusing variable names
+ // vars = vars.cols(Vindx);  //only consider variables with at least two unique values
   //------------- removed vars with only 1 unique value------
   
+
+  //----- get residuals ---- 
+  arma::colvec res = survLm_fit(y, mX, weights)["residuals"];
+  res%=weights; //considering weighted residuals rij
+  
+  
   //cout<<"going to get_pvec"<<endl;
-  List pvec = get_pvec(res, mX, vars, cat_vec,  clusters, des_ind, perm_reps, pval);
+  List pvec = get_pvec(res, mX, vars.cols(Vindx), cat_vec,  clusters, des_ind, perm_reps, pval);
   arma::vec pvals = pvec["pvec"];
   if(pvals.min() <= pval){
-    
+ //   cout<<"pvals is "<<pvals<<endl;
    //uvec s = find(pvals == pvals.min());
    uvec s = find(pvals <= pval);
     arma::vec peaks = pvec["peaks"];
 
     
-    if(s.n_elem == 1) return(s(0));
+    if(s.n_elem == 1) return(Vindx(s(0)));
     else{
-      uvec a = find(peaks.elem(s)==max(peaks(s))); //
-      return(s(a(0))); // return first max
+      uvec a = shuffle(find(peaks.elem(s)==max(peaks(s)))); //
+      return(Vindx(s(a(0)))); // return random max if more than 1 minimum
     }//end else more than 1 min
     
   }//end if there are significant variables

@@ -14,6 +14,7 @@ The recursive partitioning algorithm has an unbiased variable selection
 and accounts for the sample design.
 The algorithm accounts for one-stage of stratification and clustering as
 well as unequal probability of selection.
-This version does not handle missing values, so only complete cases of a 
-dataset are used.
+There are also functions for producing random forest estimator 
+(a list of \code{rpms} objects), a boosted regression tree and tree 
+based zero-inflated model.
 }

@@ -1,4 +1,8 @@
--------- Version 0_4_0 -----------------
+-----------   Version 0_4_1  ------------------
+
+Allows rpms_forest() an option to run parallel on non-Windows systems
+
+------------  Version 0_4_0  ------------------
 
 Provides function rpms_forest() which fits a random forest model to survey data
 
